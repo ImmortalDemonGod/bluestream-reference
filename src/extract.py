@@ -34,6 +34,9 @@ def download_oklahoma_chloride(config):
     params = {
         'statecode': config['data_sources']['state_code'],
         'characteristicName': config['data_sources']['characteristic'],
+        'siteType': config['data_sources']['site_type'],
+        'sampleMedia': config['data_sources']['sample_media'],
+        'providers': config['data_sources'].get('providers'),
         'startDateLo': config['data_sources']['date_range']['start'],
         'startDateHi': config['data_sources']['date_range']['end'],
         'mimeType': 'csv',
@@ -45,7 +48,11 @@ def download_oklahoma_chloride(config):
     output_dir = Path(config['output_paths']['raw_data'])
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    print(f"Downloading {config['data_sources']['characteristic']} data from EPA...")
+    print(f"Downloading data from EPA...")
+    print(f"Characteristics: {params['characteristicName']}")
+    print(f"Site Type: {params['siteType']}")
+    print(f"Sample Media: {params['sampleMedia']}")
+    print(f"Providers: {params['providers']}")
     print(f"Date range: {params['startDateLo']} to {params['startDateHi']}")
     
     # Download data

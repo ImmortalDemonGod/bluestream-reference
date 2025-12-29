@@ -3,7 +3,15 @@
 data_sources:
   state: "Oklahoma"
   state_code: "US:40"
-  characteristic: "Chloride"
+  characteristic: 
+    - "Chloride"
+    - "Dissolved oxygen (DO)"
+    - "Dissolved oxygen"
+  site_type: "Stream"
+  sample_media: "Water"
+  providers:
+    - "NWIS"
+    - "STORET"
   date_range:
     start: "01-01-1993"
     end: "12-31-2024"

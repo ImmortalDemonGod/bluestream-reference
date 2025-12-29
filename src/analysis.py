@@ -69,6 +69,7 @@ def find_matches(volunteer_df, professional_df, config):
     params = config['matching_parameters']
     max_distance_m = params['max_distance_meters']
     max_time_hours = params['max_time_hours']
+    match_strategy = params['match_strategy']
     
     matches = []
     
@@ -82,6 +83,10 @@ def find_matches(volunteer_df, professional_df, config):
     # Prepare data for cKDTree
     vol_coords = volunteer_df[['LatitudeMeasure', 'LongitudeMeasure']].values
     pro_coords = professional_df[['LatitudeMeasure', 'LongitudeMeasure']].values
+    
+    # Convert professional dataframe to records for O(1) access
+    # This is CRITICAL for performance. iloc inside a loop is too slow.
+    pro_records = professional_df.to_dict('records')
     
     # Build Tree on Professional Data
     tree = spatial.cKDTree(pro_coords)
@@ -110,12 +115,63 @@ def find_matches(volunteer_df, professional_df, config):
         vol_value = vol_row['ResultMeasureValue']
         vol_site_id = vol_row['MonitoringLocationIdentifier']
         vol_org = vol_row['OrganizationIdentifier']
-        
+
+        vol_units = np.nan
+        if 'ResultMeasure/MeasureUnitCode' in volunteer_df.columns:
+            vol_units = vol_row['ResultMeasure/MeasureUnitCode']
+
+        if match_strategy == 'all':
+            # Append all qualifying matches (reference-style behavior)
+            for pro_idx in pro_indices:
+                pro_row = pro_records[pro_idx]
+
+                # Calculate EXACT Haversine distance
+                distance = haversine_distance(
+                    vol_lat,
+                    vol_lon,
+                    pro_row['LatitudeMeasure'],
+                    pro_row['LongitudeMeasure'],
+                )
+
+                if distance > max_distance_m:
+                    continue
+
+                # Calculate temporal difference
+                time_diff = abs((pro_row['ActivityStartDate'] - vol_datetime).total_seconds() / 3600)
+
+                if time_diff > max_time_hours:
+                    continue
+
+                pro_units = np.nan
+                if 'ResultMeasure/MeasureUnitCode' in professional_df.columns:
+                    pro_units = pro_row.get('ResultMeasure/MeasureUnitCode', np.nan)
+
+                matches.append({
+                    'Vol_SiteID': vol_site_id,
+                    'Pro_SiteID': pro_row['MonitoringLocationIdentifier'],
+                    'Vol_Organization': vol_org,
+                    'Pro_Organization': pro_row['OrganizationIdentifier'],
+                    'Vol_Value': vol_value,
+                    'Pro_Value': pro_row['ResultMeasureValue'],
+                    'Vol_Units': vol_units,
+                    'Pro_Units': pro_units,
+                    'Vol_DateTime': vol_datetime,
+                    'Pro_DateTime': pro_row['ActivityStartDate'],
+                    'Vol_Lat': vol_lat,
+                    'Vol_Lon': vol_lon,
+                    'Pro_Lat': pro_row['LatitudeMeasure'],
+                    'Pro_Lon': pro_row['LongitudeMeasure'],
+                    'Distance_m': distance,
+                    'Time_Diff_hours': time_diff,
+                })
+
+            continue
+
         candidates = []
         
         # Check specific candidates from spatial index
         for pro_idx in pro_indices:
-            pro_row = professional_df.iloc[pro_idx]
+            pro_row = pro_records[pro_idx]
             
             # Calculate EXACT Haversine distance
             distance = haversine_distance(vol_lat, vol_lon, 
@@ -129,10 +185,14 @@ def find_matches(volunteer_df, professional_df, config):
             time_diff = abs((pro_row['ActivityStartDate'] - vol_datetime).total_seconds() / 3600)
             
             if time_diff <= max_time_hours:
+                pro_units = np.nan
+                if 'ResultMeasure/MeasureUnitCode' in professional_df.columns:
+                    pro_units = pro_row.get('ResultMeasure/MeasureUnitCode', np.nan)
                 candidates.append({
                     'distance': distance,
                     'time_diff': time_diff,
                     'pro_value': pro_row['ResultMeasureValue'],
+                    'pro_units': pro_units,
                     'pro_org': pro_row['OrganizationIdentifier'],
                     'pro_site_id': pro_row['MonitoringLocationIdentifier'],
                     'pro_datetime': pro_row['ActivityStartDate'],
@@ -152,6 +212,8 @@ def find_matches(volunteer_df, professional_df, config):
                 'Pro_Organization': best_match['pro_org'],
                 'Vol_Value': vol_value,
                 'Pro_Value': best_match['pro_value'],
+                'Vol_Units': vol_units,
+                'Pro_Units': best_match['pro_units'],
                 'Vol_DateTime': vol_datetime,
                 'Pro_DateTime': best_match['pro_datetime'],
                 'Vol_Lat': vol_lat,

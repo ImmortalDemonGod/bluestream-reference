@@ -37,7 +37,8 @@ def download_oklahoma_chloride(config):
         'startDateLo': config['data_sources']['date_range']['start'],
         'startDateHi': config['data_sources']['date_range']['end'],
         'mimeType': 'csv',
-        'zip': 'yes'
+        'zip': 'yes',
+        'dataProfile': 'resultPhysChem'
     }
     
     # Create output directory

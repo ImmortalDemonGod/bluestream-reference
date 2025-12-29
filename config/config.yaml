@@ -5,8 +5,8 @@ data_sources:
   state_code: "US:40"
   characteristic: "Chloride"
   date_range:
-    start: "1993-01-01"
-    end: "2024-12-31"
+    start: "01-01-1993"
+    end: "12-31-2024"
 
 organizations:
   volunteer:

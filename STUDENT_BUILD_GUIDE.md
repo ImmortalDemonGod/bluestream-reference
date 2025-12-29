@@ -1,4 +1,4 @@
-# Blue Thumb ETL Pipeline - Student Build Guide
+# Blue Thumb ETL Pipeline - Build Guide
 ## Learn Data Engineering by Building a Real Validation System
 
 **Project:** Blue Thumb Water Quality Validation  
@@ -136,7 +136,12 @@ pip install -r requirements.txt
 data_sources:
   state: "Oklahoma"
   state_code: "US:40"
-  characteristic: "Chloride"
+  characteristic: "Chloride"  # Can also be a list for multiple parameters
+  site_type: "Stream"         # CRITICAL: Filters to stream sites only
+  sample_media: "Water"       # CRITICAL: Filters to water samples only
+  providers:                  # CRITICAL: Data providers to query
+    - "NWIS"
+    - "STORET"
   date_range:
     start: "1993-01-01"
     end: "2024-12-31"
@@ -147,9 +152,32 @@ organizations:
     - "CONSERVATION_COMMISSION"
   
   professional:
-    - "OKWRB-STREAMS_WQX"  # Oklahoma Water Resources Board
-    - "O_MTRIBE_WQX"        # Otoe-Missouria Tribe
-    # IMPORTANT: NO USGS-OK (zero matches exist in data)
+    - "OKWRB-STREAMS_WQX"    # Oklahoma Water Resources Board - Streams
+    - "O_MTRIBE_WQX"          # Otoe-Missouria Tribe
+    - "OKWRB-LAKES_WQX"       # Oklahoma Water Resources Board - Lakes
+    - "USGS-OK"               # US Geological Survey - Oklahoma
+    - "USGS-AR"               # US Geological Survey - Arkansas
+    - "USGS-TX"               # US Geological Survey - Texas
+    - "OKDEQ"                 # Oklahoma Department of Environmental Quality
+    - "ARDEQH2O_WQX"          # Arkansas Dept of Environmental Quality
+    - "CHEROKEE"              # Cherokee Nation
+    - "CHEROKEE_WQX"          # Cherokee Nation (WQX)
+    - "OKCORCOM_WQX"          # Oklahoma Corporation Commission
+    - "CNENVSER"              # Cherokee Nation Environmental Services
+    - "IOWATROK_WQX"          # Iowa Tribe of Oklahoma
+    - "KAWNATON_WQX"          # Kaw Nation
+    - "OSAGENTN_WQX"          # Osage Nation
+    - "PNDECS_WQX"            # Pawnee Nation
+    - "SFNOES_WQX"            # Sac and Fox Nation
+    - "WNENVDPT_WQX"          # Wyandotte Nation
+    - "CHOCNATWQX"            # Choctaw Nation
+    - "DELAWARENATION"        # Delaware Nation
+    - "MCNCREEK_WQX"          # Muscogee (Creek) Nation
+    - "QTEO_WQX"              # Quapaw Tribe
+    - "WDEP_WQX"              # Wichita and Affiliated Tribes
+    # Note: Oklahoma has extensive tribal water quality monitoring due to
+    # sovereign nation status. Including all professional sources maximizes
+    # the chance of finding spatial-temporal matches with volunteer data.
 
 geographic_bounds:
   oklahoma:
@@ -161,6 +189,8 @@ geographic_bounds:
 matching_parameters:
   max_distance_meters: 100
   max_time_hours: 48
+  match_strategy: "all"       # "all" = include all qualifying matches (1-to-many)
+                               # "closest" = take only spatially closest (1-to-1)
   min_concentration_mg_l: 25  # For professional data only
 
 output_paths:
@@ -181,7 +211,7 @@ output_paths:
 **Goal:** Download chloride data from EPA Water Quality Portal.
 
 **Expected runtime:** 5-10 minutes  
-**Expected output:** `data/raw/oklahoma_chloride.csv` (~155,000 records, ~75 MB)
+**Expected output:** `data/raw/oklahoma_chloride.csv` (~155,000 records, ~88 MB)
 
 ### Create `src/extract.py`
 
@@ -211,14 +241,27 @@ def download_oklahoma_chloride(config):
     
     TODO: Implement this function
     
-    Hints:
-    - Base URL: "https://www.waterqualitydata.us/data/Result/search"
-    - Query parameters needed:
-      * statecode: From config
-      * characteristicName: From config
-      * startDateLo, startDateHi: From config
-      * mimeType: 'csv'
-      * zip: 'yes'
+    CRITICAL PARAMETERS - Your download will fail without these:
+    
+    Query parameters needed:
+    * statecode: From config (e.g., 'US:40')
+    * characteristicName: From config (e.g., 'Chloride')
+    * siteType: From config (CRITICAL: 'Stream' - filters to stream sites only)
+    * sampleMedia: From config (CRITICAL: 'Water' - excludes sediment/tissue)
+    * providers: From config (list: ['NWIS', 'STORET'])
+    * startDateLo, startDateHi: From config date range
+    * mimeType: 'csv'
+    * zip: 'yes'
+    * dataProfile: 'resultPhysChem' (CRITICAL: Without this, column names will be wrong)
+    
+    Why these matter:
+    - dataProfile='resultPhysChem' ensures the CSV has ResultMeasure/MeasureUnitCode columns
+    - siteType='Stream' filters out Wells, Lakes, Estuaries (~40% smaller download)
+    - sampleMedia='Water' filters out Sediment, Tissue, Air samples
+    - providers filters to USGS (NWIS) and State/Tribal (STORET) databases
+    
+    Without these parameters, your CSV will have different column names and your
+    transform.py will crash with KeyError exceptions.
     - Use requests.get() with stream=True
     - EPA returns a ZIP file containing CSV
     - Extract the CSV that has 'result' in the filename
@@ -306,8 +349,8 @@ if __name__ == "__main__":
 
 **Expected runtime:** 2-5 minutes  
 **Expected output:**
-- `data/processed/volunteer_chloride.csv` (~15,819 records)
-- `data/processed/professional_chloride.csv` (~21,975 records after filter)
+- `data/processed/volunteer_chloride.csv` (~15,600 records)
+- `data/processed/professional_chloride.csv` (~18,200 records)
 
 ### Create `src/transform.py`
 
@@ -365,23 +408,23 @@ def filter_chloride(df):
 
 def clean_coordinates(df, config):
     """
-    Remove invalid coordinates and filter to Oklahoma bounds
+    Remove invalid coordinates
+    
+    Note: We rely on the state code filter during extraction rather than
+    strict lat/lon bounds. This preserves edge sites near state borders
+    that may have valid data.
     
     TODO: Implement coordinate cleaning
     
     Hints:
     - Columns: 'LatitudeMeasure', 'LongitudeMeasure'
-    - First remove null values with .notna()
-    - Then filter to Oklahoma bounds from config
-    - Bounds are in config['geographic_bounds']['oklahoma']
+    - Remove null values with .notna()
+    - DO NOT filter by Oklahoma bounds - state code already handled this
     
     Expected output: Similar to input (most coordinates are valid)
     """
-    # TODO: Get bounds from config
     # TODO: Remove null coordinates
-    # TODO: Filter to Oklahoma bounds
-    # TODO: Print count after cleaning
-    # TODO: Return cleaned dataframe
+    # TODO: Return cleaned dataframe (no bounds filtering needed)
     pass
 
 def clean_concentrations(df):
@@ -396,14 +439,15 @@ def clean_concentrations(df):
     - Check for 'ResultDetectionConditionText' column
       * If it exists, remove rows where it's not null (these are "Not Detected")
     - Remove negative values
-    - Remove extreme outliers (>1000 mg/L)
+    - DO NOT remove high values (>1000 mg/L) - these are scientifically valid
+      in cases of industrial discharge or saltwater intrusion
     
     Expected output: ~45,000 records
     """
     # TODO: Remove null concentrations
     # TODO: Remove "Not Detected" results
     # TODO: Remove negative values
-    # TODO: Remove outliers > 1000
+    # NOTE: Do NOT remove high concentrations
     # TODO: Print count after cleaning
     # TODO: Return cleaned dataframe
     pass
@@ -522,7 +566,8 @@ print(df['OrganizationIdentifier'].value_counts())
 
 **Goal:** Implement virtual triangulation algorithm.
 
-**Expected runtime:** 30-60 minutes  
+**Expected runtime:** 30-60 minutes with nested loop approach (as taught below)  
+**Note:** Production code uses KDTree optimization (<1 minute) - you'll learn that after mastering the fundamentals  
 **Expected output:** `data/outputs/matched_pairs.csv` (48 records)
 
 ### Create `src/analysis.py`
@@ -615,6 +660,8 @@ def find_matches(volunteer_df, professional_df, config):
     - Pro_Organization
     - Vol_Value
     - Pro_Value
+    - Vol_Units
+    - Pro_Units
     - Vol_DateTime (NOT Vol_Date)
     - Pro_DateTime (NOT Pro_Date)
     - Vol_Lat
@@ -636,8 +683,9 @@ def find_matches(volunteer_df, professional_df, config):
     """
     
     # TODO: Get thresholds from config
-    max_distance_m = # TODO
-    max_time_hours = # TODO
+    max_distance_m = # TODO: config['matching_parameters']['max_distance_meters']
+    max_time_hours = # TODO: config['matching_parameters']['max_time_hours']
+    match_strategy = # TODO: config['matching_parameters']['match_strategy']
     
     matches = []
     
@@ -646,6 +694,7 @@ def find_matches(volunteer_df, professional_df, config):
     print(f"  Professional measurements: {len(professional_df):,}")
     print(f"  Max distance: {max_distance_m}m")
     print(f"  Max time: {max_time_hours}hrs")
+    print(f"  Strategy: {match_strategy}")
     print(f"\nThis will take 30-60 minutes. Progress bar below:")
     
     # TODO: Add progress bar with tqdm
@@ -661,6 +710,11 @@ def find_matches(volunteer_df, professional_df, config):
         vol_site_id = # TODO: Get 'MonitoringLocationIdentifier'
         vol_org = # TODO: Get 'OrganizationIdentifier'
         
+        # TODO: Extract units (for data quality validation)
+        vol_units = np.nan
+        if 'ResultMeasure/MeasureUnitCode' in volunteer_df.columns:
+            vol_units = vol_row['ResultMeasure/MeasureUnitCode']
+        
         # TODO: Find all professional measurements that match
         candidates = []
         
@@ -673,6 +727,11 @@ def find_matches(volunteer_df, professional_df, config):
             pro_value = # TODO
             pro_site_id = # TODO
             pro_org = # TODO
+            
+            # TODO: Extract professional units
+            pro_units = np.nan
+            if 'ResultMeasure/MeasureUnitCode' in professional_df.columns:
+                pro_units = pro_row['ResultMeasure/MeasureUnitCode']
             
             # TODO: Calculate spatial distance in meters
             distance = # TODO: Call haversine_distance()
@@ -688,25 +747,69 @@ def find_matches(volunteer_df, professional_df, config):
                 candidates.append({
                     'distance': distance,
                     'time_diff': time_diff,
-                    # TODO: Add other fields
+                    'pro_value': pro_value,
+                    'pro_units': pro_units,
+                    'pro_org': pro_org,
+                    'pro_site_id': pro_site_id,
+                    'pro_datetime': pro_datetime,
+                    'pro_lat': pro_lat,
+                    'pro_lon': pro_lon
                 })
         
-        # TODO: If we found matches, take the spatially closest one
-        if len(candidates) > 0:
-            # TODO: Sort candidates by distance
-            # HINT: candidates.sort(key=lambda x: x['distance'])
-            
-            # TODO: Take the first (closest) match
-            best_match = # TODO
-            
-            # TODO: Create match record with EXACT column names
-            matches.append({
-                'Vol_SiteID': vol_site_id,  # NOT Vol_Site!
-                'Pro_SiteID': best_match['pro_site_id'],  # NOT Pro_Site!
-                # TODO: Fill in all other fields
-                # REMEMBER: Vol_DateTime not Vol_Date
-                # REMEMBER: Time_Diff_hours not Time_Diff_hrs
-            })
+        # TODO: Check match strategy
+        if match_strategy == 'all':
+            # Strategy: Include ALL qualifying matches (1-to-many relationship)
+            # This allows one volunteer sample to match multiple professional samples
+            # Example: One Blue Thumb site matching two nearby OKWRB sensors
+            for candidate in candidates:
+                matches.append({
+                    'Vol_SiteID': vol_site_id,
+                    'Pro_SiteID': candidate['pro_site_id'],
+                    'Vol_Organization': vol_org,
+                    'Pro_Organization': candidate['pro_org'],
+                    'Vol_Value': vol_value,
+                    'Pro_Value': candidate['pro_value'],
+                    'Vol_Units': vol_units,
+                    'Pro_Units': candidate['pro_units'],
+                    'Vol_DateTime': vol_datetime,
+                    'Pro_DateTime': candidate['pro_datetime'],
+                    'Vol_Lat': vol_lat,
+                    'Vol_Lon': vol_lon,
+                    'Pro_Lat': candidate['pro_lat'],
+                    'Pro_Lon': candidate['pro_lon'],
+                    'Distance_m': candidate['distance'],
+                    'Time_Diff_hours': candidate['time_diff']
+                })
+        else:
+            # Strategy: Take only the CLOSEST match (1-to-1 relationship)
+            # If we found matches, take the spatially closest one
+            if len(candidates) > 0:
+                # TODO: Sort candidates by distance
+                # HINT: candidates.sort(key=lambda x: x['distance'])
+                candidates.sort(key=lambda x: # TODO)
+                
+                # TODO: Take the first (closest) match
+                best_match = # TODO: candidates[0]
+                
+                # TODO: Create match record with EXACT column names
+                matches.append({
+                    'Vol_SiteID': vol_site_id,  # NOT Vol_Site!
+                    'Pro_SiteID': best_match['pro_site_id'],  # NOT Pro_Site!
+                    'Vol_Organization': vol_org,
+                    'Pro_Organization': best_match['pro_org'],
+                    'Vol_Value': vol_value,
+                    'Pro_Value': best_match['pro_value'],
+                    'Vol_Units': vol_units,
+                    'Pro_Units': best_match['pro_units'],
+                    'Vol_DateTime': vol_datetime,  # NOT Vol_Date!
+                    'Pro_DateTime': best_match['pro_datetime'],
+                    'Vol_Lat': vol_lat,
+                    'Vol_Lon': vol_lon,
+                    'Pro_Lat': best_match['pro_lat'],
+                    'Pro_Lon': best_match['pro_lon'],
+                    'Distance_m': best_match['distance'],
+                    'Time_Diff_hours': best_match['time_diff']  # NOT Time_Diff_hrs!
+                })
     
     return pd.DataFrame(matches)
 
@@ -978,6 +1081,7 @@ def test_correct_column_names():
     ['Vol_SiteID', 'Pro_SiteID',
      'Vol_Organization', 'Pro_Organization',
      'Vol_Value', 'Pro_Value',
+     'Vol_Units', 'Pro_Units',
      'Vol_DateTime', 'Pro_DateTime',
      'Vol_Lat', 'Vol_Lon', 'Pro_Lat', 'Pro_Lon',
      'Distance_m', 'Time_Diff_hours']
@@ -1163,6 +1267,7 @@ Your matched_pairs.csv MUST have these EXACT names:
 Vol_SiteID, Pro_SiteID,
 Vol_Organization, Pro_Organization,
 Vol_Value, Pro_Value,
+Vol_Units, Pro_Units,
 Vol_DateTime, Pro_DateTime,
 Vol_Lat, Vol_Lon, Pro_Lat, Pro_Lon,
 Distance_m, Time_Diff_hours
@@ -1271,6 +1376,13 @@ Good luck! 🚀
 
 ---
 
-**Last updated:** December 26, 2024  
-**For:** Self-directed learning and portfolio development
-
+**Last updated:** December 29, 2024  
+**Version:** 2.0 (Corrected - Aligned with actual codebase implementation)  
+**For:** Self-directed learning and portfolio development  
+**Changes from v1.0:**
+- Added critical EPA API parameters (dataProfile, siteType, sampleMedia, providers)
+- Added match_strategy parameter and conditional logic
+- Updated organization list (2 → 24 professional sources)
+- Added Vol_Units and Pro_Units columns
+- Removed bounds filtering and outlier filtering (aligned with actual code)
+- Updated all expected outputs to match actual results (N=48, R²=0.839)

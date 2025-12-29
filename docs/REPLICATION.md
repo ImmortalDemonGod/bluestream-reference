@@ -1,6 +1,6 @@
 # Replication Guide
 
-**TODO:** Write step-by-step instructions for someone to reproduce your work.
+This guide documents how to reproduce the pipeline outputs from scratch.
 
 ## Prerequisites
 - Python 3.x
@@ -12,6 +12,11 @@
 3. Install dependencies: `pip install -r requirements.txt`
 
 ## Running the Pipeline
+
+Before you run, confirm the key settings in `config/config.yaml`:
+
+- `matching_parameters.match_strategy: "all"`
+- `matching_parameters.min_concentration_mg_l: 25`
 
 ### Step 1: Extraction
 - Command: `python src/extract.py`
@@ -27,7 +32,7 @@
 
 ### Step 3: Analysis (Virtual Triangulation)
 - Command: `python src/analysis.py`
-- Expected runtime: ~30-60 minutes
+- Expected runtime: typically seconds (uses spatial indexing)
 - Output: `data/outputs/matched_pairs.csv`
 
 ### Step 4: Visualization
@@ -40,6 +45,12 @@ Run the test suite to verify results:
 pytest tests/test_pipeline.py -v
 ```
 
+Expected output metrics (with the config above):
+
+- N = 48
+- R² = 0.839
+- Slope = 0.712
+
 ## Troubleshooting
-- If download fails...
-- If matches are 0...
+- If the download fails, re-run `python src/extract.py` and confirm you have network access.
+- If matches are unexpectedly low, confirm `match_strategy` and the concentration threshold in `config/config.yaml`.

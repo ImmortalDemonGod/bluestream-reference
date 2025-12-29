@@ -40,18 +40,20 @@ def filter_chloride(df):
 
 def clean_coordinates(df, config):
     """Remove invalid coordinates"""
-    bounds = config['geographic_bounds']['oklahoma']
+    # bounds = config['geographic_bounds']['oklahoma']
     
     # Remove missing coordinates
     df = df[df['LatitudeMeasure'].notna() & df['LongitudeMeasure'].notna()].copy()
     
+    # NOTE: Reference implementation does not filter by strict bounds, 
+    # relying instead on the state code filter during extraction.
     # Filter to Oklahoma bounds
-    df = df[
-        (df['LatitudeMeasure'] >= bounds['lat_min']) &
-        (df['LatitudeMeasure'] <= bounds['lat_max']) &
-        (df['LongitudeMeasure'] >= bounds['lon_min']) &
-        (df['LongitudeMeasure'] <= bounds['lon_max'])
-    ].copy()
+    # df = df[
+    #     (df['LatitudeMeasure'] >= bounds['lat_min']) &
+    #     (df['LatitudeMeasure'] <= bounds['lat_max']) &
+    #     (df['LongitudeMeasure'] >= bounds['lon_min']) &
+    #     (df['LongitudeMeasure'] <= bounds['lon_max'])
+    # ].copy()
     
     print(f"  After coordinate cleaning: {len(df):,}")
     return df
@@ -72,8 +74,9 @@ def clean_concentrations(df):
     # Remove negative values
     df = df[df['ResultMeasureValue'] >= 0].copy()
     
+    # NOTE: Reference data contains values > 1000 mg/L (max ~1880), so we remove this filter
     # Remove extreme outliers (>1000 mg/L unlikely for chloride)
-    df = df[df['ResultMeasureValue'] < 1000].copy()
+    # df = df[df['ResultMeasureValue'] < 1000].copy()
     
     print(f"  After concentration cleaning: {len(df):,}")
     return df

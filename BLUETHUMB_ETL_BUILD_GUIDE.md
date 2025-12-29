@@ -119,7 +119,7 @@ pip install -r requirements.txt
 
 ---
 
-## 📋 Task 1: Configuration (30 minutes)
+## 📋 Task 1: Configuration
 
 ### Create `config/config.yaml`
 
@@ -129,10 +129,18 @@ pip install -r requirements.txt
 data_sources:
   state: "Oklahoma"
   state_code: "US:40"
-  characteristic: "Chloride"
+  characteristic: 
+    - "Chloride"
+    - "Dissolved oxygen (DO)"
+    - "Dissolved oxygen"
+  site_type: "Stream"
+  sample_media: "Water"
+  providers:
+    - "NWIS"
+    - "STORET"
   date_range:
-    start: "1993-01-01"
-    end: "2024-12-31"
+    start: "01-01-1993"
+    end: "12-31-2024"
 
 organizations:
   volunteer:
@@ -142,7 +150,27 @@ organizations:
   professional:
     - "OKWRB-STREAMS_WQX"  # Oklahoma Water Resources Board
     - "O_MTRIBE_WQX"        # Otoe-Missouria Tribe
-    # NOTE: NO USGS-OK - zero matches exist in data
+    - "OKWRB-LAKES_WQX"     # Oklahoma Water Resources Board (Lakes)
+    - "USGS-OK"             # US Geological Survey Oklahoma
+    - "USGS-AR"             # US Geological Survey Arkansas
+    - "USGS-TX"             # US Geological Survey Texas
+    - "OKDEQ"               # Oklahoma Dept of Environmental Quality
+    - "ARDEQH2O_WQX"        # Arkansas Dept of Environmental Quality
+    - "CHEROKEE"            # Cherokee Nation
+    - "CHEROKEE_WQX"        # Cherokee Nation (WQX)
+    - "OKCORCOM_WQX"        # Oklahoma Corporation Commission
+    - "CNENVSER"            # Cherokee Nation Environmental Services
+    - "IOWATROK_WQX"        # Iowa Tribe of Oklahoma
+    - "KAWNATON_WQX"        # Kaw Nation
+    - "OSAGENTN_WQX"        # Osage Nation
+    - "PNDECS_WQX"          # Pawnee Nation
+    - "SFNOES_WQX"          # Sac and Fox Nation
+    - "WNENVDPT_WQX"        # Wyandotte Nation
+    - "CHOCNATWQX"          # Choctaw Nation
+    - "DELAWARENATION"      # Delaware Nation
+    - "MCNCREEK_WQX"        # Muscogee (Creek) Nation
+    - "QTEO_WQX"            # Quapaw Tribe
+    - "WDEP_WQX"            # Wichita and Affiliated Tribes
 
 geographic_bounds:
   oklahoma:
@@ -154,7 +182,8 @@ geographic_bounds:
 matching_parameters:
   max_distance_meters: 100
   max_time_hours: 48
-  min_concentration_mg_l: 25  # For professional data
+  match_strategy: "all"
+  min_concentration_mg_l: 25  # For professional data only
 
 output_paths:
   raw_data: "data/raw/"
@@ -175,7 +204,7 @@ output_paths:
 extract.py - Download data from EPA Water Quality Portal
 
 Expected runtime: 5-10 minutes
-Expected output: data/raw/oklahoma_chloride.csv (~155,000 records, ~75 MB)
+Expected output: data/raw/oklahoma_chloride.csv (~155,000 records, ~88 MB)
 """
 
 import requests
@@ -207,17 +236,25 @@ def download_oklahoma_chloride(config):
     params = {
         'statecode': config['data_sources']['state_code'],
         'characteristicName': config['data_sources']['characteristic'],
+        'siteType': config['data_sources']['site_type'],
+        'sampleMedia': config['data_sources']['sample_media'],
+        'providers': config['data_sources'].get('providers'),
         'startDateLo': config['data_sources']['date_range']['start'],
         'startDateHi': config['data_sources']['date_range']['end'],
         'mimeType': 'csv',
-        'zip': 'yes'
+        'zip': 'yes',
+        'dataProfile': 'resultPhysChem'
     }
     
     # Create output directory
     output_dir = Path(config['output_paths']['raw_data'])
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    print(f"Downloading {config['data_sources']['characteristic']} data from EPA...")
+    print(f"Downloading data from EPA...")
+    print(f"Characteristics: {params['characteristicName']}")
+    print(f"Site Type: {params['siteType']}")
+    print(f"Sample Media: {params['sampleMedia']}")
+    print(f"Providers: {params['providers']}")
     print(f"Date range: {params['startDateLo']} to {params['startDateHi']}")
     
     # Download data
@@ -280,7 +317,7 @@ if __name__ == "__main__":
 
 ---
 
-## 🧹 Task 3: Data Transformation (3-4 hours)
+## 🧹 Task 3: Data Transformation 
 
 ### Create `src/transform.py`
 
@@ -290,8 +327,8 @@ transform.py - Clean and filter EPA data
 
 Expected runtime: 2-5 minutes
 Expected output:
-  - data/processed/volunteer_chloride.csv (~15,819 records)
-  - data/processed/professional_chloride.csv (~21,975 records)
+  - data/processed/volunteer_chloride.csv (~15,600 records)
+  - data/processed/professional_chloride.csv (~18,200 records)
 """
 
 import pandas as pd
@@ -320,24 +357,29 @@ def filter_chloride(df):
 
 def clean_coordinates(df, config):
     """Remove invalid coordinates"""
-    bounds = config['geographic_bounds']['oklahoma']
+    # bounds = config['geographic_bounds']['oklahoma']
     
     # Remove missing coordinates
     df = df[df['LatitudeMeasure'].notna() & df['LongitudeMeasure'].notna()].copy()
     
+    # NOTE: Reference implementation does not filter by strict bounds, 
+    # relying instead on the state code filter during extraction.
     # Filter to Oklahoma bounds
-    df = df[
-        (df['LatitudeMeasure'] >= bounds['lat_min']) &
-        (df['LatitudeMeasure'] <= bounds['lat_max']) &
-        (df['LongitudeMeasure'] >= bounds['lon_min']) &
-        (df['LongitudeMeasure'] <= bounds['lon_max'])
-    ].copy()
+    # df = df[
+    #     (df['LatitudeMeasure'] >= bounds['lat_min']) &
+    #     (df['LatitudeMeasure'] <= bounds['lat_max']) &
+    #     (df['LongitudeMeasure'] >= bounds['lon_min']) &
+    #     (df['LongitudeMeasure'] <= bounds['lon_max'])
+    # ].copy()
     
     print(f"  After coordinate cleaning: {len(df):,}")
     return df
 
 def clean_concentrations(df):
     """Filter for valid concentration values"""
+    
+    # Coerce to numeric, turning non-numerics into NaN
+    df['ResultMeasureValue'] = pd.to_numeric(df['ResultMeasureValue'], errors='coerce')
     
     # Remove null values
     df = df[df['ResultMeasureValue'].notna()].copy()
@@ -349,8 +391,9 @@ def clean_concentrations(df):
     # Remove negative values
     df = df[df['ResultMeasureValue'] >= 0].copy()
     
+    # NOTE: Reference data contains values > 1000 mg/L (max ~1880), so we remove this filter
     # Remove extreme outliers (>1000 mg/L unlikely for chloride)
-    df = df[df['ResultMeasureValue'] < 1000].copy()
+    # df = df[df['ResultMeasureValue'] < 1000].copy()
     
     print(f"  After concentration cleaning: {len(df):,}")
     return df
@@ -439,7 +482,7 @@ if __name__ == "__main__":
 
 ---
 
-## 🎯 Task 4: Spatial-Temporal Matching (4-6 hours)
+## 🎯 Task 4: Spatial-Temporal Matching 
 
 ### Create `src/analysis.py`
 
@@ -447,7 +490,7 @@ if __name__ == "__main__":
 """
 analysis.py - Virtual triangulation matching algorithm
 
-Expected runtime: 30-60 minutes
+Expected runtime: < 1 minute (uses spatial indexing)
 Expected output: data/outputs/matched_pairs.csv (48 records)
 """
 
@@ -688,7 +731,7 @@ if __name__ == "__main__":
 
 ---
 
-## 📊 Task 5: Visualization (2 hours)
+## 📊 Task 5: Visualization 
 
 ### Create `src/visualize.py`
 
@@ -808,7 +851,7 @@ if __name__ == "__main__":
 
 ---
 
-## ✅ Task 6: Verification & Testing (1 hour)
+## ✅ Task 6: Verification & Testing 
 
 ### Create `tests/test_pipeline.py`
 
@@ -1258,6 +1301,16 @@ Good luck! 🚀
 
 ---
 
-**Last updated:** December 26, 2024  
-**Version:** 1.0 (Verified against actual implementation)
+**Last updated:** December 29, 2024  
+**Version:** 2.0-RC (Release Candidate - Partial Update)  
+**Status:** Config, Extract, Transform sections updated ✅ | Analysis section needs completion ⚠️  
 
+**Changes from v1.0:**
+- ✅ Updated config to match actual config.yaml (24 professional orgs, match_strategy)
+- ✅ Added critical EPA API parameters (dataProfile, siteType, sampleMedia, providers)
+- ✅ Updated transform with commented filters (matches actual code)
+- ✅ Updated file sizes and record counts to actual values
+- ⚠️ Analysis section still shows old nested loop - needs match_strategy + Units update
+- ⚠️ Test section needs Vol_Units/Pro_Units column addition
+
+**Next:** Complete analysis.py section using guidance from COMPREHENSIVE_CODE_AUDIT.md

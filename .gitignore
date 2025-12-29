@@ -1,9 +1,13 @@
 # Data files (too large for git)
+
 data/raw/*.csv
 data/raw/*.zip
 data/processed/*.csv
 data/outputs/*.png
 data/outputs/*.csv
+data/outputs/*.txt
+data/ORGINAL_DATA/
+data/reference_matched_pairs.csv
 
 # Python
 __pycache__/

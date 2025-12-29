@@ -20,6 +20,12 @@ Before you run, confirm the key settings in `config/config.yaml`:
 
 ### Step 1: Extraction
 - Command: `python src/extract.py`
+- Parameters automatically applied:
+  - Site Type: `Stream`
+  - Sample Media: `Water`
+  - Characteristics: `Chloride`, `Dissolved oxygen`
+  - Providers: `NWIS`, `STORET` (WQX)
+  - Data Profile: `resultPhysChem`
 - Expected runtime: ~5-10 minutes
 - Output: `data/raw/oklahoma_chloride.csv`
 

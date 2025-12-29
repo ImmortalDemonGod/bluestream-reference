@@ -22,6 +22,13 @@ def load_raw_data(config):
     filepath = Path(config['output_paths']['raw_data']) / "oklahoma_chloride.csv"
     print(f"Loading raw data from {filepath}...")
     df = pd.read_csv(filepath, low_memory=False)
+    
+    # Rename coordinate columns if they exist with prefix
+    df.rename(columns={
+        'ActivityLocation/LatitudeMeasure': 'LatitudeMeasure',
+        'ActivityLocation/LongitudeMeasure': 'LongitudeMeasure'
+    }, inplace=True)
+    
     print(f"  Loaded {len(df):,} records")
     return df
 
@@ -51,6 +58,9 @@ def clean_coordinates(df, config):
 
 def clean_concentrations(df):
     """Filter for valid concentration values"""
+    
+    # Coerce to numeric, turning non-numerics into NaN
+    df['ResultMeasureValue'] = pd.to_numeric(df['ResultMeasureValue'], errors='coerce')
     
     # Remove null values
     df = df[df['ResultMeasureValue'].notna()].copy()

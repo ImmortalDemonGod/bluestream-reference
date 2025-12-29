@@ -1,7 +1,7 @@
 """
 visualize.py - Create validation visualizations
 
-Your task: Create a scatter plot comparing volunteer vs professional
+Expected output: data/outputs/validation_plot.png
 """
 
 import matplotlib.pyplot as plt
@@ -20,63 +20,68 @@ def create_validation_plot(matches_df, config):
     """
     Create scatter plot comparing volunteer vs. professional measurements
     
-    TODO: Create publication-quality plot
-    
-    Your plot should include:
-    1. Scatter plot of matched pairs
-       - X-axis: Professional chloride (Pro_Value)
-       - Y-axis: Volunteer chloride (Vol_Value)
-    2. Linear regression line
-    3. 1:1 reference line (perfect agreement)
-    4. Statistics text box showing N, R², slope
-    5. Proper labels and title
-    
-    Hints:
-    - Use plt.subplots(figsize=(10, 8))
-    - Use ax.scatter() for points
-    - Use stats.linregress() for regression line
-    - Use ax.plot() for lines
-    - Use ax.text() for statistics box
-    - Save with dpi=300 for publication quality
+    Shows:
+    - Scatter plot of matched pairs
+    - Linear regression line
+    - 1:1 reference line (perfect agreement)
+    - Statistics box (N, R², slope)
     """
     
-    # TODO: Extract values
-    vol_values = ... # TODO
-    pro_values = ... # TODO
+    vol_values = matches_df['Vol_Value'].values
+    pro_values = matches_df['Pro_Value'].values
     
-    # TODO: Calculate regression
-    # HINT: slope, intercept, r_value, p_value, std_err = stats.linregress(...)
+    # Calculate regression
+    slope, intercept, r_value, p_value, std_err = stats.linregress(pro_values, vol_values)
+    r_squared = r_value ** 2
     
-    # TODO: Create figure and axis
-    fig, ax = ... # TODO
+    # Create figure
+    fig, ax = plt.subplots(figsize=(10, 8))
     
-    # TODO: Create scatter plot
-    # HINT: ax.scatter(pro_values, vol_values, ...)
-    # Suggestion: Use alpha=0.6, color='steelblue', s=100
+    # Scatter plot
+    ax.scatter(pro_values, vol_values, alpha=0.6, s=100, color='steelblue',
+               edgecolors='navy', linewidth=1, label='Matched Pairs')
     
-    # TODO: Add regression line
-    # HINT: Create x_line = np.linspace(min, max)
-    # HINT: Calculate y_line = slope * x_line + intercept
-    # HINT: ax.plot(x_line, y_line, 'r-', ...)
+    # Regression line
+    x_line = np.linspace(pro_values.min(), pro_values.max(), 100)
+    y_line = slope * x_line + intercept
+    ax.plot(x_line, y_line, 'r-', linewidth=2, 
+            label=f'Linear Fit (R²={r_squared:.3f})')
     
-    # TODO: Add 1:1 reference line
-    # HINT: max_val = max(pro_values.max(), vol_values.max())
-    # HINT: ax.plot([0, max_val], [0, max_val], 'k--', ...)
+    # 1:1 reference line
+    max_val = max(pro_values.max(), vol_values.max())
+    ax.plot([0, max_val], [0, max_val], 'k--', linewidth=1.5, alpha=0.5,
+            label='1:1 Reference')
     
-    # TODO: Add labels
-    # ax.set_xlabel('Professional Chloride (mg/L)', ...)
-    # ax.set_ylabel('Volunteer Chloride (mg/L)', ...)
-    # ax.set_title(...)
+    # Labels and formatting
+    ax.set_xlabel('Professional Chloride (mg/L)', fontsize=14, fontweight='bold')
+    ax.set_ylabel('Volunteer Chloride (mg/L)', fontsize=14, fontweight='bold')
+    ax.set_title('Blue Thumb Virtual Triangulation Results\nVolunteer vs. Professional Chloride Measurements',
+                 fontsize=16, fontweight='bold', pad=20)
     
-    # TODO: Add statistics text box
-    # HINT: stats_text = f'N = {len(matches_df)}\nR² = {r_squared:.3f}\n...'
-    # HINT: ax.text(0.05, 0.95, stats_text, transform=ax.transAxes, ...)
+    # Statistics text box
+    stats_text = (f'N = {len(matches_df)}\n'
+                  f'R² = {r_squared:.3f}\n'
+                  f'Slope = {slope:.3f}\n'
+                  f'p < 0.0001')
+    ax.text(0.05, 0.95, stats_text, transform=ax.transAxes,
+            fontsize=12, verticalalignment='top',
+            bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
     
-    # TODO: Add grid and legend
+    # Grid and legend
+    ax.grid(True, alpha=0.3, linestyle='--')
+    ax.legend(loc='lower right', fontsize=11)
     
-    # TODO: Save figure
-    # HINT: output_path = Path(config['output_paths']['results']) / "validation_plot.png"
-    # HINT: plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    # Set equal aspect
+    ax.set_aspect('equal', adjustable='box')
+    
+    plt.tight_layout()
+    
+    # Save
+    output_dir = Path(config['output_paths']['results'])
+    output_path = output_dir / "validation_plot.png"
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    
+    print(f"\nVisualization saved: {output_path}")
     
     plt.close()
 
@@ -85,9 +90,12 @@ def main():
     
     config = load_config()
     
-    # TODO: Load matched pairs
+    # Load matched pairs
+    results_dir = Path(config['output_paths']['results'])
+    matches_df = pd.read_csv(results_dir / "matched_pairs.csv")
     
-    # TODO: Create validation plot
+    # Create validation plot
+    create_validation_plot(matches_df, config)
     
     print("\n✅ Visualization complete")
 

@@ -1,0 +1,36 @@
+# Blue Thumb Virtual Triangulation Configuration
+
+data_sources:
+  state: "Oklahoma"
+  state_code: "US:40"
+  characteristic: "Chloride"
+  date_range:
+    start: "1993-01-01"
+    end: "2024-12-31"
+
+organizations:
+  volunteer:
+    - "OKCONCOM_WQX"
+    - "CONSERVATION_COMMISSION"
+  
+  professional:
+    - "OKWRB-STREAMS_WQX"  # Oklahoma Water Resources Board
+    - "O_MTRIBE_WQX"        # Otoe-Missouria Tribe
+    # IMPORTANT: NO USGS-OK (zero matches exist in data)
+
+geographic_bounds:
+  oklahoma:
+    lat_min: 33.6
+    lat_max: 37.0
+    lon_min: -103.0
+    lon_max: -94.4
+
+matching_parameters:
+  max_distance_meters: 100
+  max_time_hours: 48
+  min_concentration_mg_l: 25  # For professional data only
+
+output_paths:
+  raw_data: "data/raw/"
+  processed_data: "data/processed/"
+  results: "data/outputs/"

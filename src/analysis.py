@@ -92,10 +92,22 @@ def find_matches(volunteer_df, professional_df, config):
         vol_site_id = vol_row['MonitoringLocationIdentifier']
         vol_org = vol_row['OrganizationIdentifier']
         
+        # Optimization: Filter professional data to a rough bounding box FIRST
+        # 1 degree lat ~= 111 km. 100m = 0.1km. 0.005 deg is plenty of buffer (~500m)
+        lat_buffer = 0.005
+        lon_buffer = 0.005
+        
+        candidates_df = professional_df[
+            (professional_df['LatitudeMeasure'] >= vol_lat - lat_buffer) &
+            (professional_df['LatitudeMeasure'] <= vol_lat + lat_buffer) &
+            (professional_df['LongitudeMeasure'] >= vol_lon - lon_buffer) &
+            (professional_df['LongitudeMeasure'] <= vol_lon + lon_buffer)
+        ]
+        
         # Find all professional measurements that match criteria
         candidates = []
         
-        for jdx, pro_row in professional_df.iterrows():
+        for jdx, pro_row in candidates_df.iterrows():
             
             pro_lat = pro_row['LatitudeMeasure']
             pro_lon = pro_row['LongitudeMeasure']

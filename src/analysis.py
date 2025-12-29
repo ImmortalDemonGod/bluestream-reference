@@ -48,14 +48,14 @@ def haversine_distance(lat1, lon1, lat2, lon2):
     """
     
     # TODO: Define Earth's radius in meters
-    R = # TODO
+    R = ... # TODO
     
     # TODO: Convert decimal degrees to radians
     # HINT: Use np.radians()
     
     # TODO: Calculate differences
-    dlat = # TODO
-    dlon = # TODO
+    dlat = ... # TODO
+    dlon = ... # TODO
     
     # TODO: Implement Haversine formula
     # HINT: Use np.sin(), np.cos(), np.arctan2(), np.sqrt()
@@ -106,8 +106,8 @@ def find_matches(volunteer_df, professional_df, config):
     """
     
     # TODO: Get thresholds from config
-    max_distance_m = # TODO
-    max_time_hours = # TODO
+    max_distance_m = ... # TODO
+    max_time_hours = ... # TODO
     
     matches = []
     
@@ -124,12 +124,12 @@ def find_matches(volunteer_df, professional_df, config):
     for idx, vol_row in volunteer_df.iterrows():
         
         # TODO: Extract volunteer measurement details
-        vol_lat = # TODO: Get 'LatitudeMeasure'
-        vol_lon = # TODO: Get 'LongitudeMeasure'
-        vol_datetime = # TODO: Get 'ActivityStartDate'
-        vol_value = # TODO: Get 'ResultMeasureValue'
-        vol_site_id = # TODO: Get 'MonitoringLocationIdentifier'
-        vol_org = # TODO: Get 'OrganizationIdentifier'
+        vol_lat = ... # TODO: Get 'LatitudeMeasure'
+        vol_lon = ... # TODO: Get 'LongitudeMeasure'
+        vol_datetime = ... # TODO: Get 'ActivityStartDate'
+        vol_value = ... # TODO: Get 'ResultMeasureValue'
+        vol_site_id = ... # TODO: Get 'MonitoringLocationIdentifier'
+        vol_org = ... # TODO: Get 'OrganizationIdentifier'
         
         # TODO: Find all professional measurements that match
         candidates = []
@@ -137,19 +137,19 @@ def find_matches(volunteer_df, professional_df, config):
         for jdx, pro_row in professional_df.iterrows():
             
             # TODO: Extract professional measurement details
-            pro_lat = # TODO
-            pro_lon = # TODO
-            pro_datetime = # TODO
-            pro_value = # TODO
-            pro_site_id = # TODO
-            pro_org = # TODO
+            pro_lat = ... # TODO
+            pro_lon = ... # TODO
+            pro_datetime = ... # TODO
+            pro_value = ... # TODO
+            pro_site_id = ... # TODO
+            pro_org = ... # TODO
             
             # TODO: Calculate spatial distance in meters
-            distance = # TODO: Call haversine_distance()
+            distance = ... # TODO: Call haversine_distance()
             
             # TODO: Calculate temporal difference in hours
             # HINT: time_diff = abs((pro_datetime - vol_datetime).total_seconds() / 3600)
-            time_diff = # TODO
+            time_diff = ... # TODO
             
             # TODO: Check if within thresholds
             if distance <= max_distance_m and time_diff <= max_time_hours:
@@ -167,7 +167,7 @@ def find_matches(volunteer_df, professional_df, config):
             # HINT: candidates.sort(key=lambda x: x['distance'])
             
             # TODO: Take the first (closest) match
-            best_match = # TODO
+            best_match = ... # TODO
             
             # TODO: Create match record with EXACT column names
             matches.append({
@@ -200,8 +200,8 @@ def calculate_statistics(matches_df):
     """
     
     # TODO: Extract values
-    vol_values = # TODO
-    pro_values = # TODO
+    vol_values = ... # TODO
+    pro_values = ... # TODO
     
     # TODO: Run linear regression
     # HINT: slope, intercept, r_value, p_value, std_err = stats.linregress(pro_values, vol_values)
@@ -210,11 +210,11 @@ def calculate_statistics(matches_df):
     
     # TODO: Return statistics dictionary
     return {
-        'n': # TODO,
-        'r_squared': # TODO,
-        'slope': # TODO,
-        'intercept': # TODO,
-        'p_value': # TODO
+        'n': ..., # TODO,
+        'r_squared': ..., # TODO,
+        'slope': ..., # TODO,
+        'intercept': ..., # TODO,
+        'p_value': ... # TODO
     }
 
 def save_results(matches_df, stats, config):

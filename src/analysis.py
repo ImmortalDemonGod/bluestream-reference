@@ -1,7 +1,7 @@
 """
 analysis.py - Virtual triangulation matching algorithm
 
-Expected runtime: 30-60 minutes
+Expected runtime: < 1 minute (uses spatial indexing)
 Expected output: data/outputs/matched_pairs.csv (48 records)
 """
 

@@ -3,8 +3,8 @@ transform.py - Clean and filter EPA data
 
 Expected runtime: 2-5 minutes
 Expected output:
-  - data/processed/volunteer_chloride.csv (~15,819 records)
-  - data/processed/professional_chloride.csv (~21,975 records)
+  - data/processed/volunteer_chloride.csv (~15,600 records)
+  - data/processed/professional_chloride.csv (~18,200 records)
 """
 
 import pandas as pd

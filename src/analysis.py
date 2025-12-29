@@ -7,7 +7,7 @@ Expected output: data/outputs/matched_pairs.csv (48 records)
 
 import pandas as pd
 import numpy as np
-from scipy import stats
+from scipy import stats, spatial
 from pathlib import Path
 from tqdm import tqdm
 import yaml
@@ -77,14 +77,33 @@ def find_matches(volunteer_df, professional_df, config):
     print(f"  Professional measurements: {len(professional_df):,}")
     print(f"  Max distance: {max_distance_m}m")
     print(f"  Max time: {max_time_hours}hrs")
-    print(f"\nThis will take 30-60 minutes. Progress bar below:")
+    print(f"\nUsing cKDTree for spatial indexing...")
     
-    # Iterate through volunteer measurements with progress bar
-    for idx, vol_row in tqdm(volunteer_df.iterrows(), 
-                              total=len(volunteer_df),
-                              desc="Matching"):
+    # Prepare data for cKDTree
+    vol_coords = volunteer_df[['LatitudeMeasure', 'LongitudeMeasure']].values
+    pro_coords = professional_df[['LatitudeMeasure', 'LongitudeMeasure']].values
+    
+    # Build Tree on Professional Data
+    tree = spatial.cKDTree(pro_coords)
+    
+    # Query for candidates within ~250 meters (approx 0.0025 degrees) to be safe
+    # 1 degree lat ~ 111km. 100m = 0.0009 deg. Using 0.0025 as buffer.
+    search_radius_deg = 0.0025
+    
+    # query_ball_point returns list of indices for each volunteer point
+    indices_list = tree.query_ball_point(vol_coords, search_radius_deg)
+    
+    # Iterate through volunteer measurements
+    for idx, pro_indices in tqdm(enumerate(indices_list), 
+                                 total=len(volunteer_df), 
+                                 desc="Matching"):
         
-        # Extract volunteer measurement details
+        if not pro_indices:
+            continue
+            
+        vol_row = volunteer_df.iloc[idx]
+        
+        # Extract volunteer details
         vol_lat = vol_row['LatitudeMeasure']
         vol_lon = vol_row['LongitudeMeasure']
         vol_datetime = vol_row['ActivityStartDate']
@@ -92,56 +111,40 @@ def find_matches(volunteer_df, professional_df, config):
         vol_site_id = vol_row['MonitoringLocationIdentifier']
         vol_org = vol_row['OrganizationIdentifier']
         
-        # Optimization: Filter professional data to a rough bounding box FIRST
-        # 1 degree lat ~= 111 km. 100m = 0.1km. 0.005 deg is plenty of buffer (~500m)
-        lat_buffer = 0.005
-        lon_buffer = 0.005
-        
-        candidates_df = professional_df[
-            (professional_df['LatitudeMeasure'] >= vol_lat - lat_buffer) &
-            (professional_df['LatitudeMeasure'] <= vol_lat + lat_buffer) &
-            (professional_df['LongitudeMeasure'] >= vol_lon - lon_buffer) &
-            (professional_df['LongitudeMeasure'] <= vol_lon + lon_buffer)
-        ]
-        
-        # Find all professional measurements that match criteria
         candidates = []
         
-        for jdx, pro_row in candidates_df.iterrows():
+        # Check specific candidates from spatial index
+        for pro_idx in pro_indices:
+            pro_row = professional_df.iloc[pro_idx]
             
-            pro_lat = pro_row['LatitudeMeasure']
-            pro_lon = pro_row['LongitudeMeasure']
-            pro_datetime = pro_row['ActivityStartDate']
-            pro_value = pro_row['ResultMeasureValue']
-            pro_site_id = pro_row['MonitoringLocationIdentifier']
-            pro_org = pro_row['OrganizationIdentifier']
+            # Calculate EXACT Haversine distance
+            distance = haversine_distance(vol_lat, vol_lon, 
+                                        pro_row['LatitudeMeasure'], 
+                                        pro_row['LongitudeMeasure'])
             
-            # Calculate spatial distance (meters)
-            distance = haversine_distance(vol_lat, vol_lon, pro_lat, pro_lon)
+            if distance > max_distance_m:
+                continue
+                
+            # Calculate temporal difference
+            time_diff = abs((pro_row['ActivityStartDate'] - vol_datetime).total_seconds() / 3600)
             
-            # Calculate temporal difference (hours)
-            time_diff = abs((pro_datetime - vol_datetime).total_seconds() / 3600)
-            
-            # Check if within thresholds
-            if distance <= max_distance_m and time_diff <= max_time_hours:
+            if time_diff <= max_time_hours:
                 candidates.append({
                     'distance': distance,
                     'time_diff': time_diff,
-                    'pro_value': pro_value,
-                    'pro_org': pro_org,
-                    'pro_site_id': pro_site_id,
-                    'pro_datetime': pro_datetime,
-                    'pro_lat': pro_lat,
-                    'pro_lon': pro_lon
+                    'pro_value': pro_row['ResultMeasureValue'],
+                    'pro_org': pro_row['OrganizationIdentifier'],
+                    'pro_site_id': pro_row['MonitoringLocationIdentifier'],
+                    'pro_datetime': pro_row['ActivityStartDate'],
+                    'pro_lat': pro_row['LatitudeMeasure'],
+                    'pro_lon': pro_row['LongitudeMeasure']
                 })
         
         # If we found matches, take the spatially closest one
         if len(candidates) > 0:
-            # Sort by distance, take closest
             candidates.sort(key=lambda x: x['distance'])
             best_match = candidates[0]
             
-            # CRITICAL: Use exact column names that match our actual output
             matches.append({
                 'Vol_SiteID': vol_site_id,
                 'Pro_SiteID': best_match['pro_site_id'],
@@ -212,8 +215,8 @@ def main():
     
     # Load processed data
     proc_dir = Path(config['output_paths']['processed_data'])
-    volunteer_df = pd.read_csv(proc_dir / "volunteer_chloride.csv")
-    professional_df = pd.read_csv(proc_dir / "professional_chloride.csv")
+    volunteer_df = pd.read_csv(proc_dir / "volunteer_chloride.csv", low_memory=False)
+    professional_df = pd.read_csv(proc_dir / "professional_chloride.csv", low_memory=False)
     
     # Parse dates
     volunteer_df['ActivityStartDate'] = pd.to_datetime(volunteer_df['ActivityStartDate'])

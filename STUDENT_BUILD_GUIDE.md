@@ -1,4 +1,34 @@
 # Blue Thumb ETL Pipeline - Build Guide
+## Project Charter & Role Definition
+
+**Project:** Blue Thumb Water Quality Validation
+**Status:** Phase 1 Execution
+
+### 🏛️ Operational Roles
+
+This project operates on the **Architect-Implementer-Verifier (AIV)** model.
+
+*   **Principal Investigator (Architect):** Miguel Ingram
+    *   **Responsibility:** Defined scientific methodology, established validation targets (N=48, R²=0.839), and manages State Agency partnership.
+    *   **Output:** The Executive Summary & Scientific Paper.
+
+*   **Lead Data Engineer (Implementer):** [Your Name]
+    *   **Responsibility:** You own the **Production Codebase**. You are responsible for translating the Architect's spec into a robust, reproducible ETL pipeline.
+    *   **Output:** The GitHub Repository, Python Modules, and automated Test Suite.
+
+### 📝 Attribution Protocol (Critical)
+
+When you initialize `README.md` for this repository, use the following attribution header to align with our commercial case study:
+
+> **Project:** Oklahoma Blue Thumb Data Validation Pipeline
+> **Engineering Lead:** [Your Name]
+> **Architected by:** Miguel Ingram (Black Box Research)
+
+
+**Why this matters:** This structure allows you to claim "Lead Data Engineer" on your resume/portfolio, demonstrating that you can execute a spec from a Principal Architect in a professional environment.
+
+---
+
 ## Learn Data Engineering by Building a Real Validation System
 
 **Project:** Blue Thumb Water Quality Validation  
@@ -1289,8 +1319,39 @@ Distance_m, Time_Diff_hours
 
 ## 🚀 Submission
 
-When complete:
+### 🎯 What You Submit
 
+1.  **GitHub Repository** with:
+    -   All 5 modules in `src/`
+    -   `README.md` with attribution header (see Project Charter)
+    -   `requirements.txt`
+    -   `config/config.yaml`
+
+2.  **Git History** showing your work
+    -   Commit messages should be meaningful
+    -   You own the development history
+
+3.  **Validation Plot** (`data/outputs/validation_plot.png`)
+    -   Your name in the title
+    -   Shows N=48, R²=0.839
+
+### ✅ Submission Checklist
+
+- [ ] README.md has proper attribution header
+- [ ] All tests pass (`pytest -v`)
+- [ ] Pipeline produces correct results (N=48, R²=0.839)
+- [ ] Git user config is set to your name/email
+- [ ] Repository is clean (no unnecessary files)
+
+### 🏆 Success Criteria
+
+You've succeeded when:
+- Your pipeline reproduces the target results
+- You can explain each architectural decision
+- Your repository tells a clear story of your work
+- You can confidently claim "Lead Data Engineer" for this project
+
+**Final Steps:**
 1. **Verify everything works:**
    ```bash
    # Fresh clone test

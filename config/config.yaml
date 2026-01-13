@@ -3,10 +3,7 @@
 data_sources:
   state: "Oklahoma"
   state_code: "US:40"
-  characteristic: 
-    - "Chloride"
-    - "Dissolved oxygen (DO)"
-    - "Dissolved oxygen"
+  characteristic: "Chloride"
   site_type: "Stream"
   sample_media: "Water"
   providers:

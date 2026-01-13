@@ -33,7 +33,7 @@ When you initialize `README.md` for this repository, use the following attributi
 
 **Project:** Blue Thumb Water Quality Validation  
 **Goal:** Build your own ETL pipeline from scratch (with guidance)
-**Timeline:** 2-3 weeks (self-paced)  
+**Timeline:** 2-3 weeks (self-paced) / Jan 6-8 (Tentative - adjust as needed)  
 **Purpose:** Learn by doing + create portfolio piece you can actually explain
 
 ---
@@ -41,7 +41,7 @@ When you initialize `README.md` for this repository, use the following attributi
 ## 🎯 What You're Building
 
 A complete data pipeline that:
-1. Downloads 155,000+ water quality records from EPA
+1. Downloads 50,000+ water quality records from EPA
 2. Cleans and filters to volunteer vs. professional measurements  
 3. Performs spatial-temporal matching (virtual triangulation)
 4. Produces validation results: **N=48 matches, R²=0.839**
@@ -89,7 +89,7 @@ bluethumb-validation/
 
 ---
 
-## ⚙️ Setup (30 minutes)
+## ⚙️ Setup
 
 ### 1. Create Repository
 
@@ -154,7 +154,7 @@ pip install -r requirements.txt
 
 ---
 
-## 📋 Task 1: Configuration (30 minutes)
+## 📋 Task 1: Configuration
 
 **Goal:** Create configuration file with all pipeline parameters.
 
@@ -236,12 +236,12 @@ output_paths:
 
 ---
 
-## 📊 Task 2: Data Extraction (2-3 hours)
+## 📊 Task 2: Data Extraction
 
 **Goal:** Download chloride data from EPA Water Quality Portal.
 
 **Expected runtime:** 5-10 minutes  
-**Expected output:** `data/raw/oklahoma_chloride.csv` (~155,000 records, ~88 MB)
+**Expected output:** `data/raw/oklahoma_chloride.csv` (~50,000 records, ~32 MB)
 
 ### Create `src/extract.py`
 
@@ -305,8 +305,8 @@ def download_oklahoma_chloride(config):
         
     Expected output:
         - File: data/raw/oklahoma_chloride.csv
-        - Size: ~75 MB
-        - Records: ~155,000
+        - Size: ~32 MB
+        - Records: ~50,000
     """
     
     # TODO: Build API URL and parameters
@@ -373,7 +373,7 @@ if __name__ == "__main__":
 
 ---
 
-## 🧹 Task 3: Data Transformation (3-4 hours)
+## 🧹 Task 3: Data Transformation 
 
 **Goal:** Clean raw data and separate volunteer from professional measurements.
 
@@ -592,7 +592,7 @@ print(df['OrganizationIdentifier'].value_counts())
 
 ---
 
-## 🎯 Task 4: Spatial-Temporal Matching (4-6 hours)
+## 🎯 Task 4: Spatial-Temporal Matching
 
 **Goal:** Implement virtual triangulation algorithm.
 
@@ -953,7 +953,7 @@ This will be SLOW (~30-60 minutes) because of nested loops. That's okay! You're 
 
 ---
 
-## 📊 Task 5: Visualization (2 hours)
+## 📊 Task 5: Visualization
 
 **Goal:** Create publication-quality validation plot.
 
@@ -1076,7 +1076,7 @@ if __name__ == "__main__":
 
 ---
 
-## ✅ Task 6: Testing (1 hour)
+## ✅ Task 6: Testing
 
 **Goal:** Write tests to verify your pipeline works correctly.
 
@@ -1436,14 +1436,3 @@ When you're done, you'll have something real on your GitHub that you can talk ab
 Good luck! 🚀
 
 ---
-
-**Last updated:** December 29, 2024  
-**Version:** 2.0 (Corrected - Aligned with actual codebase implementation)  
-**For:** Self-directed learning and portfolio development  
-**Changes from v1.0:**
-- Added critical EPA API parameters (dataProfile, siteType, sampleMedia, providers)
-- Added match_strategy parameter and conditional logic
-- Updated organization list (2 → 24 professional sources)
-- Added Vol_Units and Pro_Units columns
-- Removed bounds filtering and outlier filtering (aligned with actual code)
-- Updated all expected outputs to match actual results (N=48, R²=0.839)

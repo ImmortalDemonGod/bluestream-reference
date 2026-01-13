@@ -2,7 +2,7 @@
 extract.py - Download data from EPA Water Quality Portal
 
 Expected runtime: 5-10 minutes
-Expected output: data/raw/oklahoma_chloride.csv (~155,000 records, ~88 MB)
+Expected output: data/raw/oklahoma_chloride.csv (~50,000 records, ~32 MB)
 """
 
 import requests

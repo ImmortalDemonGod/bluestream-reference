@@ -3,7 +3,7 @@
 data/raw/*.csv
 data/raw/*.zip
 data/processed/*.csv
-data/outputs/*.png
+#data/outputs/*.png
 
 data/outputs/*.csv
 data/outputs/*.txt

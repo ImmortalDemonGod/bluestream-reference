@@ -4,6 +4,7 @@ data/raw/*.csv
 data/raw/*.zip
 data/processed/*.csv
 data/outputs/*.png
+
 data/outputs/*.csv
 data/outputs/*.txt
 data/ORGINAL_DATA/
@@ -25,3 +26,6 @@ venv/
 Thumbs.db
 files.zip
 resultphyschem-ok.zip
+docs
+filesd.zip
+.gitignore

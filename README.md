@@ -8,7 +8,7 @@
  
  ## 📊 Executive Summary
  
- This repository contains the **Test Reference Implementation** for the BlueStream validation protocol. It serves as the forensic audit engine for the **Oklahoma Blue Thumb** volunteer water quality monitoring program.
+ This repository contains the **Reference Implementation** for the BlueStream validation protocol. It serves as the forensic audit engine for the **Oklahoma Blue Thumb** volunteer water quality monitoring program.
  
  Designed and architected by **Miguel Ingram**, this pipeline mines 30 years of historical data from the EPA Water Quality Portal to perform **"Virtual Triangulation"**—a rigorous spatial-temporal matching algorithm that validates volunteer measurements against professional agency sensors.
  

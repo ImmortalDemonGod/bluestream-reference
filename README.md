@@ -1,18 +1,20 @@
-# BlueStream: Forensic Validation of Citizen Science Data
+ # BlueStream: Forensic Validation of Citizen Science Data
  
- > **Project:** Oklahoma Blue Thumb Data Validation Pipeline
- > **Engineering Lead:** [Your Name]
- > **Architected by:** Miguel Ingram (Black Box Research)
+ > **Principal Investigator:** Miguel Ingram (Black Box Research Labs)
+ > **Status:** Phase 1 Reference Implementation
+ > **Validation Target:** N=48, R²=0.839 (Verified)
  
- ![Python](https://img.shields.io/badge/Python-3.9%2B-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Status](https://img.shields.io/badge/Status-Validation_Complete-success)
+ ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Status](https://img.shields.io/badge/Status-Regulatory_Reference-success)
  
- ## Executive Summary
+ ## 📊 Executive Summary
  
- This repository implements an end-to-end ETL pipeline to perform a forensic audit of the **Oklahoma Blue Thumb** volunteer water quality monitoring program.
+ This repository contains the **Test Reference Implementation** for the BlueStream validation protocol. It serves as the forensic audit engine for the **Oklahoma Blue Thumb** volunteer water quality monitoring program.
  
- By mining 30 years of historical records from the **EPA Water Quality Portal (WQP)**, we apply **Virtual Triangulation**: matching volunteer measurements with professional agency measurements (USGS, OWRB, Tribal) taken at the same location within a 48-hour window.
+ Designed and architected by **Miguel Ingram**, this pipeline mines 30 years of historical data from the EPA Water Quality Portal to perform **"Virtual Triangulation"**—a rigorous spatial-temporal matching algorithm that validates volunteer measurements against professional agency sensors.
  
- **Primary finding:** Blue Thumb volunteer data correlates with professional measurements at **`R² = 0.839`**, validating the program’s rigor and showing that properly trained citizen scientists can track environmental signals with professional-grade fidelity.
+ **The Finding:** Blue Thumb volunteer data correlates with professional sensors at **$R^2 = 0.839$**, proving that the program's data infrastructure produces professional-grade environmental intelligence.
+ 
+ ---
  
  ## Key Results
  
@@ -69,7 +71,7 @@
  
  ```bash
  # Clone the repository
- git clone https://github.com/[YOUR_USERNAME]/bluestream-test.git
+ git clone https://github.com/ImmortalDemonGod/bluestream-test.git
  cd bluestream-test
  
  # Install dependencies
@@ -115,4 +117,4 @@
  
  Distributed under the MIT License. See `LICENSE` for more information.
  
- **Disclaimer:** This is an independent analysis conducted by Black Box Research volunteers. It is not an official publication of the Oklahoma Conservation Commission.
+ **Disclaimer:** This is an independent analysis conducted by Miguel Ingram. It is not an official publication of the Oklahoma Conservation Commission.

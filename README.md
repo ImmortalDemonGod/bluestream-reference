@@ -1,7 +1,7 @@
- # BlueStream: Forensic Validation of Citizen Science Data
+ # BlueStream: Forensic Validation of Citizen Science Data 
  
  > **Principal Investigator:** Miguel Ingram (Black Box Research Labs)
- > **Status:** Phase 1 Reference Implementation
+ > **Status:** Active Forensic Audit / Transitioning to AIV Protocol v2.1
  > **Validation Target:** N=48, R²=0.839 (Verified)
  
  ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Status](https://img.shields.io/badge/Status-Regulatory_Reference-success)

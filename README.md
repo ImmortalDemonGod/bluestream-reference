@@ -126,7 +126,6 @@ Distributed under the MIT License. See `LICENSE` for more information.
 This research is conducted by **Black Box Research Labs LLC** with technical support and data access provided by the **Oklahoma Conservation Commission (OCC)**.
 
 **Current Trajectory:**
-- **Endorsement:** Letter of Support in development (OCC)
 - **Validation:** Findings scheduled for the **2026 OCLWA Conference**
 - **Regulatory Alignment:** Analysis methodology reviewed with OCC Blue Thumb program leadership (Jan 15, 2026)
 

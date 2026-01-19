@@ -1,9 +1,13 @@
  # BlueStream: Forensic Validation of Citizen Science Data 
  
  > **Principal Investigator:** Miguel Ingram (Black Box Research Labs)
+
  > **Status:** Collaborative Validation Study | Phase 1 (Aggregate Analysis) Complete
+
  > **Institutional Context:** Directed research in alignment with the **Oklahoma Conservation Commission (OCC)**
+
  > **Milestone:** Methodology and findings reviewed with OCC Leadership (Jan 2026)
+
  > **Validation Target:** N=48, R²=0.839 (Verified)
  
  ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Status](https://img.shields.io/badge/Status-Regulatory_Reference-success)

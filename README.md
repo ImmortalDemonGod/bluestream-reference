@@ -1,7 +1,9 @@
  # BlueStream: Forensic Validation of Citizen Science Data
  
  > **Principal Investigator:** Miguel Ingram (Black Box Research Labs)
- > **Status:** Phase 1 Reference Implementation
+ > **Status:** Collaborative Validation Study | Phase 1 (Aggregate Analysis) Complete
+ > **Institutional Context:** Directed research in alignment with the **Oklahoma Conservation Commission (OCC)**
+ > **Milestone:** Methodology and findings reviewed with OCC Leadership (Jan 2026)
  > **Validation Target:** N=48, R²=0.839 (Verified)
  
  ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Status](https://img.shields.io/badge/Status-Regulatory_Reference-success)
@@ -112,9 +114,22 @@
  
  - **Unit normalization:** The current pipeline assumes units are consistent across matched measurements.
  - **Screening-level interpretation:** This analysis is designed for validation and QA/QC screening, not regulatory determination. It should not be used to make public accusations about impairment status or compliance.
- 
- ## License
- 
- Distributed under the MIT License. See `LICENSE` for more information.
- 
- **Disclaimer:** This is an independent analysis conducted by Miguel Ingram. It is not an official publication of the Oklahoma Conservation Commission.
+
+## License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+---
+
+### 🏛️ Institutional Context & Data Governance
+
+This research is conducted by **Black Box Research Labs LLC** with technical support and data access provided by the **Oklahoma Conservation Commission (OCC)**.
+
+**Current Trajectory:**
+- **Endorsement:** Letter of Support in development (OCC)
+- **Validation:** Findings scheduled for the **2026 OCLWA Conference**
+- **Regulatory Alignment:** Analysis methodology reviewed with OCC Blue Thumb program leadership (Jan 15, 2026)
+
+This repository serves as the forensic engine for the study. All data handling and algorithmic verification are performed using the **AIV (Algorithmic Intelligence Validation) Protocol** to ensure scientific defensibility and program-specific alignment.
+
+**Black Box Research Labs** specializes in forensic data validation and algorithmic audit systems for environmental monitoring programs.

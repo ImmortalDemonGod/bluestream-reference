@@ -1,4 +1,4 @@
- # BlueStream: Forensic Validation of Citizen Science Data
+ # BlueStream: Forensic Validation of Citizen Science Data 
  
  > **Principal Investigator:** Miguel Ingram (Black Box Research Labs)
  > **Status:** Collaborative Validation Study | Phase 1 (Aggregate Analysis) Complete

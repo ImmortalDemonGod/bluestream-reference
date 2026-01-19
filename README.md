@@ -4,9 +4,11 @@
 
  > **Status:** Collaborative Validation Study | Phase 1 (Aggregate Analysis) Complete
 
+ > **Milestone:** Methodology and findings reviewed with OCC Leadership (Jan 15, 2026)
+
+
  > **Institutional Context:** Directed research in alignment with the **Oklahoma Conservation Commission (OCC)**
 
- > **Milestone:** Methodology and findings reviewed with OCC Leadership (Jan 2026)
 
  > **Validation Target:** N=48, R²=0.839 (Verified)
  

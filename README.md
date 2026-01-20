@@ -135,6 +135,6 @@ This research is conducted by **Black Box Research Labs LLC** with technical sup
 - **Validation:** Findings scheduled for the **2026 OCLWA Conference**
 - **Regulatory Alignment:** Analysis methodology reviewed with OCC Blue Thumb program leadership (Jan 15, 2026)
 
-This repository serves as the forensic engine for the study. All data handling and algorithmic verification are performed using the **AIV (Algorithmic Intelligence Validation) Protocol** to ensure scientific defensibility and program-specific alignment.
+This repository serves as the forensic engine for the study.
 
 **Black Box Research Labs** specializes in forensic data validation and algorithmic audit systems for environmental monitoring programs.

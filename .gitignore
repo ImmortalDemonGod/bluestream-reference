@@ -33,3 +33,11 @@ resultphyschem-ok.zip
 filesd.zip
 filesd/
 Zoom.pkg
+scripts/*
+docs/bluethumb_audit_publication_analysis.md
+docs/bluethumb_comprehensive_systems_analysis.md
+.gitignore
+docs/occ_email_correspondence.md
+docs/occ_letter_of_support_strategy.md
+.gitignore
+docs/SYSTEM_ANALYSIS_AND_REBUILD_PLAN.md

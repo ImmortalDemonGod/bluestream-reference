@@ -2,14 +2,14 @@
 ## Project Charter & Role Definition
 
 **Project:** Blue Thumb Water Quality Validation
-**Status:** Phase 1 Execution
+**Status:** Phase 2 Execution
 
 ### 🏛️ Operational Roles
 
 This project operates on the **Architect-Implementer-Verifier (AIV)** model.
 
 *   **Principal Investigator (Architect):** Miguel Ingram
-    *   **Responsibility:** Defined scientific methodology, established validation targets (N=48, R²=0.839), and manages State Agency partnership.
+    *   **Responsibility:** Defined scientific methodology, established dual-comparison validation framework (pro-to-pro baseline + volunteer-to-pro validation), and manages State Agency partnership.
     *   **Output:** The Executive Summary & Scientific Paper.
 
 *   **Lead Data Engineer (Implementer):** [Your Name]
@@ -44,7 +44,9 @@ A complete data pipeline that:
 1. Downloads 50,000+ water quality records from EPA
 2. Cleans and filters to volunteer vs. professional measurements  
 3. Performs spatial-temporal matching (virtual triangulation)
-4. Produces validation results: **N=48 matches, R²=0.839**
+4. Produces dual validation results:
+   - **Pro-to-Pro baseline:** N=42, R²=0.753 (OCC Rotating Basin vs professional reference)
+   - **Vol-to-Pro validation:** N=25, R²=0.607 (Blue Thumb volunteers vs professional reference)
 5. Creates publication-quality visualizations
 
 **Why this matters:** You'll learn production ETL skills while validating citizen science data.
@@ -217,16 +219,19 @@ geographic_bounds:
     lon_max: -94.4
 
 matching_parameters:
-  max_distance_meters: 100
-  max_time_hours: 48
-  match_strategy: "all"       # "all" = include all qualifying matches (1-to-many)
-                               # "closest" = take only spatially closest (1-to-1)
+  max_distance_meters: 125
+  max_time_hours: 72
+  match_strategy: "closest"   # "closest" = take only spatially closest (1-to-1)
+                               # "all" = include all qualifying matches (1-to-many)
   min_concentration_mg_l: 25  # For professional data only
 
 output_paths:
   raw_data: "data/raw/"
   processed_data: "data/processed/"
   results: "data/outputs/"
+
+external_sources:
+  volunteer_blue_thumb_csv: "data/Requested_Blue Thumb Chemical Data.csv"
 ```
 
 **Verification:** 
@@ -509,7 +514,7 @@ def separate_volunteer_professional(df, config):
     
     Hints:
     - Column: 'OrganizationIdentifier'
-    - Volunteer orgs from config['organizations']['volunteer']
+    - Rotating basin orgs from config['organizations']['rotating_basin']
     - Professional orgs from config['organizations']['professional']
     - Use .isin() to filter
     - Apply >25 mg/L filter to PROFESSIONAL data only
@@ -598,7 +603,7 @@ print(df['OrganizationIdentifier'].value_counts())
 
 **Expected runtime:** 30-60 minutes with nested loop approach (as taught below)  
 **Note:** Production code uses KDTree optimization (<1 minute) - you'll learn that after mastering the fundamentals  
-**Expected output:** `data/outputs/matched_pairs.csv` (48 records)
+**Expected output:** `data/outputs/matched_pairs.csv` (25 vol-to-pro records) + `matched_pairs_pro_to_pro.csv` (42 records)
 
 ### Create `src/analysis.py`
 
@@ -709,7 +714,7 @@ def find_matches(volunteer_df, professional_df, config):
     Returns:
         DataFrame with matched pairs
         
-    Expected output: 48 matches
+    Expected output: 25 vol-to-pro matches (+ 42 pro-to-pro baseline)
     """
     
     # TODO: Get thresholds from config
@@ -855,11 +860,11 @@ def calculate_statistics(matches_df):
     - Y-axis: Volunteer values (Vol_Value)
     - Calculate R² from r_value
     
-    Expected results:
-    - N = 48
-    - R² ≈ 0.839
-    - Slope ≈ 0.712
-    - p-value < 0.0001
+    Expected results (vol-to-pro):
+    - N = 25
+    - R² ≈ 0.607
+    - Slope ≈ 0.813
+    - p-value < 0.001
     """
     
     # TODO: Extract values
@@ -923,11 +928,11 @@ if __name__ == "__main__":
 
 **Verification Checklist:**
 - [ ] Haversine test: OKC to Tulsa ≈ 160 km
-- [ ] Exactly 48 matches found
-- [ ] All distances ≤ 100m
-- [ ] All time differences ≤ 48 hours
-- [ ] R² = 0.839 (±0.001)
-- [ ] Slope = 0.712 (±0.001)
+- [ ] 25 vol-to-pro matches + 42 pro-to-pro matches found
+- [ ] All distances ≤ 125m
+- [ ] All time differences ≤ 72 hours
+- [ ] Vol-to-Pro: R² = 0.607 (±0.01), Slope = 0.813 (±0.01)
+- [ ] Pro-to-Pro: R² = 0.753 (±0.01), Slope = 0.735 (±0.01)
 - [ ] Column names EXACTLY match specification
 
 **Debugging the Haversine Formula:**
@@ -1066,10 +1071,10 @@ if __name__ == "__main__":
 
 **Verification Checklist:**
 - [ ] File exists: `data/outputs/validation_plot.png`
-- [ ] Plot shows 48 points
+- [ ] Plot shows 25 points (vol-to-pro)
 - [ ] Regression line visible
 - [ ] 1:1 reference line visible
-- [ ] Statistics box shows: N=48, R²=0.839, Slope=0.712
+- [ ] Statistics box shows: N=25, R²=0.607, Slope=0.813
 - [ ] Axes labeled correctly
 - [ ] Title present
 - [ ] Image is high resolution (300 DPI)
@@ -1122,27 +1127,27 @@ def test_correct_column_names():
 
 def test_sample_size():
     """
-    Verify we got exactly 48 matches
+    Verify we got exactly 25 matches (vol-to-pro)
     
-    TODO: Load CSV and check len(df) == 48
+    TODO: Load CSV and check len(df) == 25
     """
     # TODO: Implement
     pass
 
 def test_distance_threshold():
     """
-    Verify all distances <= 100m
+    Verify all distances <= 125m
     
-    TODO: Load CSV and check df['Distance_m'].max() <= 100
+    TODO: Load CSV and check df['Distance_m'].max() <= 125
     """
     # TODO: Implement
     pass
 
 def test_time_threshold():
     """
-    Verify all time differences <= 48 hours
+    Verify all time differences <= 72 hours
     
-    TODO: Load CSV and check df['Time_Diff_hours'].max() <= 48
+    TODO: Load CSV and check df['Time_Diff_hours'].max() <= 72
     """
     # TODO: Implement
     pass
@@ -1158,21 +1163,21 @@ def test_concentration_filter():
 
 def test_correlation():
     """
-    Verify R² = 0.839 ± 0.001
+    Verify R² = 0.607 ± 0.01 (vol-to-pro)
     
     TODO: Calculate R² and check it's within tolerance
     
     Hints:
     - Use stats.linregress(pro_values, vol_values)
     - Calculate r_squared = r_value ** 2
-    - Check abs(r_squared - 0.839) < 0.001
+    - Check abs(r_squared - 0.607) < 0.01
     """
     # TODO: Implement
     pass
 
 def test_slope():
     """
-    Verify slope = 0.712 ± 0.001
+    Verify slope = 0.813 ± 0.01 (vol-to-pro)
     
     TODO: Calculate slope and check it's within tolerance
     """
@@ -1279,17 +1284,22 @@ Before considering this project complete:
 ### **Functionality:**
 - [ ] extract.py downloads data successfully
 - [ ] transform.py produces correct record counts
-- [ ] analysis.py finds exactly 48 matches
+- [ ] analysis.py finds 25 vol-to-pro matches + 42 pro-to-pro matches
 - [ ] visualize.py creates clear plot
 - [ ] All tests pass
 
-### **Results (EXACT):**
-- [ ] N = 48
-- [ ] R² = 0.839 (±0.001)
-- [ ] Slope = 0.712 (±0.001)
-- [ ] Max distance ≤ 100m
-- [ ] Max time ≤ 48 hours
+### **Results (Vol-to-Pro):**
+- [ ] N = 25
+- [ ] R² = 0.607 (±0.01)
+- [ ] Slope = 0.813 (±0.01)
+- [ ] Max distance ≤ 125m
+- [ ] Max time ≤ 72 hours
 - [ ] Min professional value > 25 mg/L
+
+### **Results (Pro-to-Pro Baseline):**
+- [ ] N = 42
+- [ ] R² = 0.753 (±0.01)
+- [ ] Slope = 0.735 (±0.01)
 
 ### **Column Names (CRITICAL):**
 Your matched_pairs.csv MUST have these EXACT names:
@@ -1333,20 +1343,20 @@ Distance_m, Time_Diff_hours
 
 3.  **Validation Plot** (`data/outputs/validation_plot.png`)
     -   Your name in the title
-    -   Shows N=48, R²=0.839
+    -   Shows N=25, R²=0.607 (vol-to-pro)
 
 ### ✅ Submission Checklist
 
 - [ ] README.md has proper attribution header
 - [ ] All tests pass (`pytest -v`)
-- [ ] Pipeline produces correct results (N=48, R²=0.839)
+- [ ] Pipeline produces correct results (vol-to-pro N=25, R²=0.607; pro-to-pro N=42, R²=0.753)
 - [ ] Git user config is set to your name/email
 - [ ] Repository is clean (no unnecessary files)
 
 ### 🏆 Success Criteria
 
 You've succeeded when:
-- Your pipeline reproduces the target results
+- Your pipeline reproduces both target results (pro-to-pro and vol-to-pro)
 - You can explain each architectural decision
 - Your repository tells a clear story of your work
 - You can confidently claim "Lead Data Engineer" for this project
@@ -1398,7 +1408,7 @@ By building this yourself, you're learning:
 
 **Ask if:**
 - You've been stuck on one error for >30 minutes
-- Your results are way off (N≠48, R²<0.8, etc.)
+- Your results are way off (vol-to-pro N≠25, pro-to-pro N≠42, etc.)
 - You don't understand what a function should do
 - Tests fail and you can't figure out why
 
@@ -1414,7 +1424,7 @@ By building this yourself, you're learning:
 
 When you finish this project, you can say:
 
-> "I built an ETL pipeline from scratch that validates citizen science data by matching volunteer measurements with professional monitoring using spatial-temporal algorithms. I implemented the Haversine formula to calculate distances between measurement locations, designed a matching algorithm that processes 330 million comparisons, and achieved a statistical correlation of R²=0.839 with 48 matched pairs. The project demonstrates my ability to work with geospatial data, implement mathematical algorithms, and build production-quality data pipelines."
+> "I built an ETL pipeline from scratch that validates citizen science data by matching volunteer measurements with professional monitoring using spatial-temporal algorithms. I implemented the Haversine formula to calculate distances between measurement locations and designed a dual-comparison framework: a professional-to-professional baseline (N=42, R²=0.753) and a volunteer-to-professional validation (N=25, R²=0.607). I also built programmatic QA/QC anomaly detection that uncovered a dual-error in the state's data pipeline. The project demonstrates my ability to work with geospatial data, implement mathematical algorithms, and build production-quality data pipelines."
 
 **That's a portfolio piece you actually built and can explain in depth.**
 

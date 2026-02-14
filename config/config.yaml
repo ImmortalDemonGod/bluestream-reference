@@ -11,10 +11,13 @@ data_sources:
     - "STORET"
   date_range:
     start: "01-01-1993"
-    end: "12-31-2024"
+    end: "12-31-2025"
 
 organizations:
-  volunteer:
+  # OCC Rotating Basin: WQP orgs OKCONCOM_WQX / CONSERVATION_COMMISSION contain
+  # PROFESSIONAL data (Method 9056), used for the pro-to-pro baseline comparison.
+  # Actual volunteer data comes from external_sources.volunteer_blue_thumb_csv.
+  rotating_basin:
     - "OKCONCOM_WQX"
     - "CONSERVATION_COMMISSION"
   
@@ -52,12 +55,16 @@ geographic_bounds:
     lon_max: -94.4
 
 matching_parameters:
-  max_distance_meters: 100
-  max_time_hours: 48
-  match_strategy: "all"
+  max_distance_meters: 125
+  max_time_hours: 72
+  match_strategy: "closest"
   min_concentration_mg_l: 25  # For professional data only
 
 output_paths:
   raw_data: "data/raw/"
   processed_data: "data/processed/"
   results: "data/outputs/"
+
+external_sources:
+  volunteer_blue_thumb_csv: "data/Requested_Blue Thumb Chemical Data.csv"
+  volunteer_blue_thumb_csv_sha256: "56d21f052e2aa51221b739cb6e2e86c1eacea14344329b86602c536c81b206cd"

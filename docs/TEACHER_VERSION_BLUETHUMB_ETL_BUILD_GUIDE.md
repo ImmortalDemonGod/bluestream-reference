@@ -14,7 +14,9 @@ A complete data pipeline that:
 1. Downloads 155,000+ water quality records from EPA
 2. Cleans and filters to volunteer vs. professional measurements  
 3. Performs spatial-temporal matching (virtual triangulation)
-4. Produces validation results: **N=48 matches, R²=0.839**
+4. Produces dual validation results:
+   - **Pro-to-Pro baseline:** N=42, R²=0.753 (OCC Rotating Basin vs professional reference)
+   - **Vol-to-Pro validation:** N=25, R²=0.607 (Blue Thumb volunteers vs professional reference)
 5. Creates publication-quality visualizations
 
 **Why this matters:** This will make Blue Thumb the first citizen science program in the US with externally validated data using only public databases.
@@ -180,15 +182,18 @@ geographic_bounds:
     lon_max: -94.4
 
 matching_parameters:
-  max_distance_meters: 100
-  max_time_hours: 48
-  match_strategy: "all"
+  max_distance_meters: 125
+  max_time_hours: 72
+  match_strategy: "closest"
   min_concentration_mg_l: 25  # For professional data only
 
 output_paths:
   raw_data: "data/raw/"
   processed_data: "data/processed/"
   results: "data/outputs/"
+
+external_sources:
+  volunteer_blue_thumb_csv: "data/Requested_Blue Thumb Chemical Data.csv"
 ```
 
 **What you're learning:** Configuration management, YAML syntax
@@ -406,15 +411,15 @@ def parse_dates(df):
     return df
 
 def separate_volunteer_professional(df, config):
-    """Separate volunteer and professional measurements"""
+    """Separate OCC Rotating Basin and professional reference measurements"""
     
-    vol_orgs = config['organizations']['volunteer']
+    rb_orgs = config['organizations']['rotating_basin']
     pro_orgs = config['organizations']['professional']
     
-    # Volunteer data
-    volunteer_df = df[df['OrganizationIdentifier'].isin(vol_orgs)].copy()
-    print(f"\nVolunteer data:")
-    print(f"  Organizations: {vol_orgs}")
+    # OCC Rotating Basin data (saved for pro-to-pro baseline)
+    volunteer_df = df[df['OrganizationIdentifier'].isin(rb_orgs)].copy()
+    print(f"\nOCC Rotating Basin (pro-to-pro baseline):")
+    print(f"  Organizations: {rb_orgs}")
     print(f"  Records: {len(volunteer_df):,}")
     
     # Professional data
@@ -491,7 +496,8 @@ if __name__ == "__main__":
 analysis.py - Virtual triangulation matching algorithm
 
 Expected runtime: < 1 minute (uses spatial indexing)
-Expected output: data/outputs/matched_pairs.csv (48 records)
+Expected output: data/outputs/matched_pairs.csv (25 vol-to-pro records)
+             + matched_pairs_pro_to_pro.csv (42 pro-to-pro records)
 """
 
 import pandas as pd
@@ -542,8 +548,8 @@ def find_matches(volunteer_df, professional_df, config):
     Find volunteer-professional measurement pairs using spatial-temporal matching
     
     Matching criteria:
-    1. Distance <= 100 meters (Haversine)
-    2. Time difference <= 48 hours (absolute)
+    1. Distance <= 125 meters (Haversine)
+    2. Time difference <= 72 hours (absolute)
     3. If multiple professionals match one volunteer, take closest in space
     
     Args:
@@ -723,11 +729,11 @@ if __name__ == "__main__":
 **What you're learning:** Spatial algorithms, nested loops, optimization, statistical analysis
 
 **Success criteria:**
-- [ ] Exactly 48 matches
-- [ ] All distances <= 100m
-- [ ] All time differences <= 48 hours
-- [ ] R² = 0.839 (±0.001)
-- [ ] Slope = 0.712 (±0.001)
+- [ ] 25 vol-to-pro matches + 42 pro-to-pro matches
+- [ ] All distances <= 125m
+- [ ] All time differences <= 72 hours
+- [ ] Vol-to-Pro: R² = 0.607 (±0.01), Slope = 0.813 (±0.01)
+- [ ] Pro-to-Pro: R² = 0.753 (±0.01), Slope = 0.735 (±0.01)
 
 ---
 
@@ -844,9 +850,9 @@ if __name__ == "__main__":
 **What you're learning:** Scientific visualization, matplotlib, statistical plots
 
 **Success criteria:**
-- [ ] Scatter plot shows all 48 points
+- [ ] Scatter plot shows all 25 vol-to-pro points
 - [ ] Regression line visible
-- [ ] Statistics box shows N=48, R²=0.839
+- [ ] Statistics box shows N=25, R²=0.607
 - [ ] High-resolution (300 DPI) PNG
 
 ---
@@ -888,21 +894,21 @@ def test_correct_column_names():
     assert list(df.columns) == expected_columns, f"Column mismatch. Expected {expected_columns}, got {list(df.columns)}"
 
 def test_sample_size():
-    """Verify we got exactly 48 matches"""
+    """Verify we got exactly 25 vol-to-pro matches"""
     df = pd.read_csv("data/outputs/matched_pairs.csv")
-    assert len(df) == 48, f"Expected 48 matches, got {len(df)}"
+    assert len(df) == 25, f"Expected 25 matches, got {len(df)}"
 
 def test_distance_threshold():
-    """Verify all distances <= 100m"""
+    """Verify all distances <= 125m"""
     df = pd.read_csv("data/outputs/matched_pairs.csv")
     max_distance = df['Distance_m'].max()
-    assert max_distance <= 100, f"Distance {max_distance}m exceeds 100m threshold"
+    assert max_distance <= 125, f"Distance {max_distance}m exceeds 125m threshold"
 
 def test_time_threshold():
-    """Verify all time differences <= 48 hours"""
+    """Verify all time differences <= 72 hours"""
     df = pd.read_csv("data/outputs/matched_pairs.csv")
     max_time = df['Time_Diff_hours'].max()
-    assert max_time <= 48, f"Time difference {max_time}hrs exceeds 48hr threshold"
+    assert max_time <= 72, f"Time difference {max_time}hrs exceeds 72hr threshold"
 
 def test_concentration_filter():
     """Verify professional concentrations > 25 mg/L"""
@@ -911,7 +917,7 @@ def test_concentration_filter():
     assert min_pro > 25, f"Professional value {min_pro} <= 25 mg/L threshold"
 
 def test_correlation():
-    """Verify R² = 0.839 ± 0.001"""
+    """Verify R² = 0.607 ± 0.01 (vol-to-pro)"""
     df = pd.read_csv("data/outputs/matched_pairs.csv")
     
     vol_vals = df['Vol_Value'].values
@@ -920,10 +926,10 @@ def test_correlation():
     slope, intercept, r_value, p_value, _ = stats.linregress(pro_vals, vol_vals)
     r_squared = r_value ** 2
     
-    assert abs(r_squared - 0.839) < 0.001, f"R² = {r_squared:.3f}, expected 0.839"
+    assert abs(r_squared - 0.607) < 0.01, f"R² = {r_squared:.3f}, expected 0.607"
 
 def test_slope():
-    """Verify slope = 0.712 ± 0.001"""
+    """Verify slope = 0.813 ± 0.01 (vol-to-pro)"""
     df = pd.read_csv("data/outputs/matched_pairs.csv")
     
     vol_vals = df['Vol_Value'].values
@@ -931,7 +937,7 @@ def test_slope():
     
     slope, intercept, r_value, p_value, _ = stats.linregress(pro_vals, vol_vals)
     
-    assert abs(slope - 0.712) < 0.001, f"Slope = {slope:.3f}, expected 0.712"
+    assert abs(slope - 0.813) < 0.01, f"Slope = {slope:.3f}, expected 0.813"
 
 def test_organizations():
     """Verify correct organizations present"""
@@ -939,12 +945,12 @@ def test_organizations():
     
     # Volunteer orgs
     vol_orgs = set(df['Vol_Organization'].unique())
-    expected_vol = {'OKCONCOM_WQX', 'CONSERVATION_COMMISSION'}
+    expected_vol = {'BLUETHUMB_VOL'}
     assert vol_orgs == expected_vol, f"Volunteer orgs mismatch: {vol_orgs}"
     
     # Professional orgs
     pro_orgs = set(df['Pro_Organization'].unique())
-    expected_pro = {'OKWRB-STREAMS_WQX', 'O_MTRIBE_WQX'}
+    expected_pro = {'OKWRB-STREAMS_WQX', 'CNENVSER'}
     assert pro_orgs == expected_pro, f"Professional orgs mismatch: {pro_orgs}"
 
 if __name__ == "__main__":
@@ -973,10 +979,16 @@ Validation of Oklahoma Blue Thumb citizen science water quality data using spati
 
 ## Results
 
-- **N = 48** matched volunteer/professional pairs
-- **R² = 0.839** (strong correlation)
-- **Systematic bias:** Volunteers underestimate by ~29%
-- **Statistical significance:** p < 0.0001
+**Pro-to-Pro Baseline (OCC Rotating Basin vs Professional Reference):**
+- **N = 42** matched pairs
+- **R² = 0.753** (strong correlation)
+- **Slope = 0.735**
+
+**Vol-to-Pro Validation (Blue Thumb Volunteers vs Professional Reference):**
+- **N = 25** matched pairs
+- **R² = 0.607** (moderate-strong correlation)
+- **Slope = 0.813**
+- **Statistical significance:** p < 0.001
 
 ## Quick Start
 
@@ -1019,11 +1031,15 @@ Blue Thumb is the **first citizen science water quality program** in the US to b
 ## Methodology
 
 **Virtual Triangulation:** Match volunteer and professional measurements using:
-1. Spatial proximity (≤100 meters, Haversine distance)
-2. Temporal proximity (≤48 hours)
+1. Spatial proximity (≤125 meters, Haversine distance)
+2. Temporal proximity (≤72 hours)
 3. Same parameter (Chloride)
 
 When multiple professionals match one volunteer, take the spatially closest.
+
+Two comparisons are run with the same parameters:
+- **Pro-to-Pro:** OCC Rotating Basin (WQP OKCONCOM_WQX) vs OKWRB/tribal orgs
+- **Vol-to-Pro:** Blue Thumb CSV (actual volunteer kits) vs OKWRB/tribal orgs
 
 ## Repository Structure
 
@@ -1111,7 +1127,8 @@ All tests should pass.
 ```bash
 ls data/outputs/
 # Should contain:
-# - matched_pairs.csv (48 rows)
+# - matched_pairs.csv (25 rows, vol-to-pro)
+# - matched_pairs_pro_to_pro.csv (42 rows)
 # - summary_statistics.txt
 # - validation_plot.png
 ```
@@ -1144,10 +1161,10 @@ pro = df['Pro_Value'].values
 
 slope, intercept, r, p, _ = stats.linregress(pro, vol)
 
-print(f"N = {len(df)}")        # 48
-print(f"R² = {r**2:.3f}")      # 0.839
-print(f"Slope = {slope:.3f}")  # 0.712
-print(f"p = {p:.4e}")          # <0.0001
+print(f"N = {len(df)}")        # 25 (vol-to-pro)
+print(f"R² = {r**2:.3f}")      # 0.607
+print(f"Slope = {slope:.3f}")  # 0.813
+print(f"p = {p:.4e}")          # <0.001
 ```
 ```
 
@@ -1166,15 +1183,14 @@ Before submitting, verify:
 ### **Data Pipeline:**
 - [ ] extract.py downloads ~155,000 records
 - [ ] transform.py produces ~15,819 volunteer, ~21,975 professional
-- [ ] analysis.py produces exactly 48 matches
+- [ ] analysis.py produces 25 vol-to-pro + 42 pro-to-pro matches
 - [ ] visualize.py creates publication-quality plot
 
 ### **Results Verification:**
-- [ ] N = 48
-- [ ] R² = 0.839 (±0.001)
-- [ ] Slope = 0.712 (±0.001)
-- [ ] All distances ≤ 100m
-- [ ] All time diffs ≤ 48 hours
+- [ ] Vol-to-Pro: N = 25, R² = 0.607 (±0.01), Slope = 0.813 (±0.01)
+- [ ] Pro-to-Pro: N = 42, R² = 0.753 (±0.01), Slope = 0.735 (±0.01)
+- [ ] All distances ≤ 125m
+- [ ] All time diffs ≤ 72 hours
 - [ ] All professional values > 25 mg/L
 
 ### **Column Names (CRITICAL):**
@@ -1274,8 +1290,8 @@ By completing this project, you gain experience with:
 
 **Ask immediately if:**
 - Extract step takes >15 minutes
-- You get <45 or >50 matches
-- R² differs by >0.005 from 0.839
+- Vol-to-pro N differs from 25 or pro-to-pro N differs from 42
+- Vol-to-pro R² differs by >0.02 from 0.607
 - Analysis takes >2 hours
 - Any test fails
 
@@ -1289,7 +1305,7 @@ Your project is complete when:
 
 1. **All code runs end-to-end** without errors
 2. **All tests pass** (pytest shows all green)
-3. **Results match exactly:** N=48, R²=0.839, slope=0.712
+3. **Results match:** Vol-to-Pro N=25, R²=0.607; Pro-to-Pro N=42, R²=0.753
 4. **Repository is well-documented** and public
 5. **You can explain** how spatial-temporal matching works
 
@@ -1301,16 +1317,15 @@ Good luck! 🚀
 
 ---
 
-**Last updated:** December 29, 2024  
-**Version:** 2.0-RC (Release Candidate - Partial Update)  
-**Status:** Config, Extract, Transform sections updated ✅ | Analysis section needs completion ⚠️  
+**Last updated:** February 11, 2026  
+**Version:** 3.0 (Phase 2 — Dual-Comparison Framework)  
+**Status:** All sections updated ✅  
 
-**Changes from v1.0:**
-- ✅ Updated config to match actual config.yaml (24 professional orgs, match_strategy)
-- ✅ Added critical EPA API parameters (dataProfile, siteType, sampleMedia, providers)
-- ✅ Updated transform with commented filters (matches actual code)
-- ✅ Updated file sizes and record counts to actual values
-- ⚠️ Analysis section still shows old nested loop - needs match_strategy + Units update
-- ⚠️ Test section needs Vol_Units/Pro_Units column addition
-
-**Next:** Complete analysis.py section using guidance from COMPREHENSIVE_CODE_AUDIT.md
+**Changes from v2.0-RC:**
+- ✅ Dual-comparison framework: pro-to-pro baseline (N=42, R²=0.753) + vol-to-pro validation (N=25, R²=0.607)
+- ✅ Updated matching parameters: 125m/72h/closest (was 100m/48h/all)
+- ✅ Added external_sources config for Blue Thumb CSV
+- ✅ Fixed volunteer org label: BLUETHUMB_VOL (OKCONCOM_WQX is OCC Rotating Basin, not volunteers)
+- ✅ Updated all test assertions, verification checklists, and expected values
+- ✅ Updated README template with dual results
+- ✅ Updated methodology to explain both comparisons

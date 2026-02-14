@@ -1,140 +1,126 @@
- # BlueStream: Forensic Validation of Citizen Science Data 
- 
- > **Principal Investigator:** Miguel Ingram (Black Box Research Labs)
+# Blue Thumb Chloride Validation Pipeline
 
- > **Status:** Collaborative Validation Study | Phase 1 (Aggregate Analysis) Complete
+> **Principal Investigator:** Miguel Ingram (Black Box Research Labs)
+> **Institutional Partner:** Oklahoma Conservation Commission (OCC)
 
- > **Milestone:** Methodology and findings reviewed with OCC Leadership (Jan 15, 2026)
+Validation of Oklahoma Blue Thumb citizen science chloride data against professional monitoring data from the EPA Water Quality Portal, using spatial-temporal matching ("virtual triangulation").
 
-
- > **Institutional Context:** Directed research in alignment with the **Oklahoma Conservation Commission (OCC)**
-
-
- > **Validation Target:** N=48, R²=0.839 (Verified)
- 
- ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Status](https://img.shields.io/badge/Status-Regulatory_Reference-success)
- 
- ## 📊 Executive Summary
- 
- This repository contains the **Reference Implementation** for the BlueStream validation protocol. It serves as the forensic audit engine for the **Oklahoma Blue Thumb** volunteer water quality monitoring program.
- 
- Designed and architected by **Miguel Ingram**, this pipeline mines 30 years of historical data from the EPA Water Quality Portal to perform **"Virtual Triangulation"**—a rigorous spatial-temporal matching algorithm that validates volunteer measurements against professional agency sensors.
- 
- **The Finding:** Blue Thumb volunteer data correlates with professional sensors at **$R^2 = 0.839$**, proving that the program's data infrastructure produces professional-grade environmental intelligence.
- 
- ---
- 
- ## Key Results
- 
- The pipeline processes ~50,000 records to identify strict spatial-temporal matches.
- 
- | Metric | Result | Interpretation |
- | :--- | :--- | :--- |
- | **Correlation (`R²`)** | **0.839** | Strong agreement between volunteer and professional measurements. |
- | **Sample Size (`N`)** | **48** | Matched pairs within 100m / 48hrs. |
- | **Slope** | **0.712** | Volunteers measure systematically lower (~29%), consistent with calibration/methodology differences (bias), not random error (noise). |
- | **P-Value** | **< 0.0001** | Relationship is statistically significant. |
- 
- ### Validation Visualization
- 
- ![Validation Plot](data/outputs/validation_plot.png)
- 
- - **Note:** `data/outputs/` is gitignored by default. This repo includes a narrow exception in `.gitignore` to allow committing `data/outputs/validation_plot.png` (while continuing to ignore other outputs).
- 
- ## Technical Architecture
- 
- This repository implements a reproducible **Functional ETL** architecture designed for auditability and easy re-runs.
- 
- All pipeline parameters are centralized in `config/config.yaml`.
- 
- ### 1. Extraction (`src/extract.py`)
- 
- - Interfaces with the **EPA WQP API**.
- - Uses `dataProfile='resultPhysChem'` to keep schemas consistent.
- - Handles large exports via ZIP download + extraction.
- 
- ### 2. Transformation (`src/transform.py`)
- 
- - Normalizes schemas across providers (STORET vs. NWIS).
- - Filters to the target characteristic (Chloride) and performs quality controls (invalid coordinates, non-detect handling).
- - Splits datasets into volunteer vs. professional organizations.
- 
- ### 3. Analysis (`src/analysis.py`)
- 
- - Implements Virtual Triangulation using **KD-Tree spatial indexing** (`scipy.spatial.cKDTree`).
- - Reduces matching complexity from `O(N × M)` (brute force) to approximately `O(N log M)`.
- - Applies a rigorous filter:
-   - **Distance:** Haversine distance ≤ 100 meters
-   - **Time:** Δt ≤ 48 hours
-   - **Match strategy:** Configurable via `matching_parameters.match_strategy`
- 
- ## Quick Start
- 
- ### Prerequisites
- 
- - Python 3.9+
- - Virtual environment recommended
- 
- ### Installation
- 
- ```bash
- # Clone the repository
- git clone https://github.com/ImmortalDemonGod/bluestream-test.git
- cd bluestream-test
- 
- # Install dependencies
- python -m venv venv
- source venv/bin/activate  # Windows: venv\Scripts\activate
- pip install -r requirements.txt
- ```
- 
- ### Running the Pipeline
- 
- ```bash
- # 1. Download raw data from EPA (5-10 mins)
- python src/extract.py
- 
- # 2. Clean and structure data
- python src/transform.py
- 
- # 3. Run spatial-temporal matching algorithm
- python src/analysis.py
- 
- # 4. Generate visualization
- python src/visualize.py
- ```
- 
- ### Verification
- 
- ```bash
- pytest tests/test_pipeline.py -v
- ```
- 
- ## Why This Matters
- 
- Citizen science is often dismissed as “hobbyist data.” This project shows that with the right data infrastructure, volunteer monitoring can be rigorously validated.
- 
- Oklahoma’s data infrastructure is unusually well-suited for this audit because volunteer organizations are represented with stable organization identifiers in EPA’s WQX/WQP metadata. That makes Virtual Triangulation possible at scale.
- 
- ## Limitations and Responsible Use
- 
- - **Unit normalization:** The current pipeline assumes units are consistent across matched measurements.
- - **Screening-level interpretation:** This analysis is designed for validation and QA/QC screening, not regulatory determination. It should not be used to make public accusations about impairment status or compliance.
-
-## License
-
-Distributed under the MIT License. See `LICENSE` for more information.
+![Python](https://img.shields.io/badge/Python-3.11-blue) ![License](https://img.shields.io/badge/License-MIT-green)
 
 ---
 
-### 🏛️ Institutional Context & Data Governance
+## Results
 
-This research is conducted by **Black Box Research Labs LLC** with technical support and data access provided by the **Oklahoma Conservation Commission (OCC)**.
+| Metric | Vol-to-Pro (Phase 2) | Pro-to-Pro (Baseline) |
+|:---|:---|:---|
+| **Sample Size** | N = 25 | N = 42 |
+| **R²** | 0.607 (p < 0.0001) | 0.753 (p < 0.0001) |
+| **Slope** | 0.813 | 0.735 |
+| **Unique Test Sites** | 4 | 15 |
+| **Matching Window** | 125 m / 72 h | 125 m / 72 h |
 
-**Current Trajectory:**
-- **Validation:** Findings scheduled for the **2026 OCLWA Conference**
-- **Regulatory Alignment:** Analysis methodology reviewed with OCC Blue Thumb program leadership (Jan 15, 2026)
+**Interpretation:** Blue Thumb volunteers capture ~81% of the professional chloride signal using field titration kits. The systematic offset is consistent with the methodological difference between Silver Nitrate Titration (volunteer) and professional laboratory methods.
 
-This repository serves as the forensic engine for the study. All data handling and algorithmic verification are performed using the **AIV (Algorithmic Intelligence Validation) Protocol** to ensure scientific defensibility and program-specific alignment.
+> **Method verification pending:** OKWRB uses EPA 325.2 (Automated Colorimetry) per WQP metadata. CNENVSER's analytical method is unrecorded in WQP (72% of vol-to-pro matches). See `docs/Volunteer_Chloride_Validation_METHODS.md`.
 
-**Black Box Research Labs** specializes in forensic data validation and algorithmic audit systems for environmental monitoring programs.
+![Validation Plot](data/outputs/validation_plot.png)
+
+---
+
+## Quick Start
+
+```bash
+git clone https://github.com/ImmortalDemonGod/bluestream-test.git
+cd bluestream-test
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# Run full pipeline
+python -m src.pipeline                   # Full run (downloads EPA data)
+python -m src.pipeline --skip-extract    # Uses cached EPA data
+
+# Or step-by-step
+python -m src.extract       # Download from EPA WQP (~5-10 min)
+python -m src.transform     # Clean, separate, load Blue Thumb CSV (~2 min)
+python -m src.analysis      # Dual matching: pro-to-pro + vol-to-pro (<1 min)
+python -m src.visualize     # Generate validation plot (<1 min)
+
+# Verify
+pytest tests/test_pipeline.py -v
+```
+
+---
+
+## Data Sources
+
+| Source | Type | Access |
+|:---|:---|:---|
+| **EPA Water Quality Portal** | Professional chloride measurements | Public API (`waterqualitydata.us`) |
+| **Blue Thumb CSV** | Volunteer chloride measurements | [OCC R-Shiny app](https://occwaterquality.shinyapps.io/OCC-app23a/) (SHA-256 verified at runtime) |
+
+### Professional Organizations in Matched Pairs
+
+- **CNENVSER** (Chickasaw Nation Environmental Services): 18 of 25 vol-to-pro matches — method unrecorded in WQP
+- **OKWRB-STREAMS_WQX** (Oklahoma Water Resources Board): 7 of 25 vol-to-pro matches — EPA 325.2
+
+---
+
+## Methodology
+
+**Virtual Triangulation** matches volunteer and professional measurements using:
+1. **Spatial proximity:** ≤ 125 meters (Haversine great-circle distance, `scipy.spatial.cKDTree`)
+2. **Temporal proximity:** ≤ 72 hours (absolute time difference)
+3. **Strategy:** Closest spatial match per volunteer measurement
+4. **Concentration filter:** Professional values > 25 mg/L (chloride)
+
+Two comparisons run with identical parameters:
+- **Vol-to-Pro:** Blue Thumb volunteers vs. professional reference (OKWRB, CNENVSER)
+- **Pro-to-Pro:** OCC Rotating Basin (WQP `OKCONCOM_WQX`, Method 9056) vs. same professional reference
+
+All parameters are in `config/config.yaml`. Full methods documentation: `docs/Volunteer_Chloride_Validation_METHODS.md`.
+
+---
+
+## Repository Structure
+
+```
+bluestream-test/
+├── README.md
+├── requirements.txt
+├── config/
+│   └── config.yaml            # All parameters (125m/72h/closest)
+├── src/
+│   ├── pipeline.py            # Single entry point
+│   ├── extract.py             # EPA WQP download
+│   ├── transform.py           # Data cleaning + Blue Thumb CSV override
+│   ├── analysis.py            # cKDTree spatial-temporal matching
+│   └── visualize.py           # Validation plot
+├── tests/
+│   └── test_pipeline.py       # 12 assertions (Phase 2 targets)
+└── docs/
+    ├── Volunteer_Chloride_Validation_METHODS.md
+    ├── BUILD_GUIDE.md
+    └── TEACHER_VERSION_BLUETHUMB_ETL_BUILD_GUIDE.md
+```
+
+Pipeline outputs (gitignored, regenerated by `python -m src.pipeline`):
+- `data/outputs/matched_pairs.csv` — Vol-to-pro matches (N=25)
+- `data/outputs/matched_pairs_pro_to_pro.csv` — Pro-to-pro baseline (N=42)
+- `data/outputs/summary_statistics_*.txt` — Per-org breakdown with method provenance
+- `data/outputs/metadata.json` — Reproducibility manifest (git commit, config hash, CSV hash)
+- `data/outputs/validation_plot.png` — Committed to repo for reference
+
+---
+
+## Phase 1 History
+
+An initial analysis (N=48, R²=0.839, 100m/48h/all) was completed in January 2026 using `OKCONCOM_WQX` data from the EPA WQP as "volunteer" data. On Jan 21, 2026, OCC's Kim Shaw clarified that `OKCONCOM_WQX` contains OCC Rotating Basin professional data (Method 9056), not Blue Thumb volunteers. Phase 2 corrects this by sourcing actual volunteer data from a separate Blue Thumb CSV export, verified against OCC's ArcGIS FeatureServer.
+
+The Phase 1 results are preserved in git history. The Rotating Basin data is now used as a pro-to-pro baseline comparison.
+
+---
+
+## License
+
+MIT License — See `LICENSE` file

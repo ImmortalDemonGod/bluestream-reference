@@ -16,7 +16,7 @@ Validation of Oklahoma Blue Thumb citizen science chloride data against professi
 | **Sample Size** | N = 25 | N = 42 |
 | **R²** | 0.607 (p < 0.0001) | 0.753 (p < 0.0001) |
 | **Slope** | 0.813 | 0.735 |
-| **Unique Test Sites** | 4 | 15 |
+| **Unique Test Sites** | 4 | 11 |
 | **Matching Window** | 125 m / 72 h | 125 m / 72 h |
 
 **Interpretation:** Blue Thumb volunteers capture ~81% of the professional chloride signal using field titration kits. The systematic offset is consistent with the methodological difference between Silver Nitrate Titration (volunteer) and professional laboratory methods.

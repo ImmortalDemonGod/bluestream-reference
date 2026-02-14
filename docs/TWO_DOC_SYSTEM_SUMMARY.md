@@ -9,7 +9,7 @@
 
 **Contains:**
 - ✅ Complete, working code for all components
-- ✅ Verified against actual N=48, R²=0.839 results
+- ✅ Verified against actual results (Pro-to-Pro: N=42, R²=0.753; Vol-to-Pro: N=25, R²=0.607)
 - ✅ Correct column names, organizations, parameters
 - ✅ Reference implementation for checking student work
 
@@ -174,7 +174,7 @@ def download_oklahoma_chloride(config):
    - Leaves implementation to student
 
 2. **Clear success criteria**
-   - Expected outputs (N=48, R²=0.839)
+   - Expected outputs (Pro-to-Pro: N=42, R²=0.753; Vol-to-Pro: N=25, R²=0.607)
    - Verification commands
    - Pass/fail tests
 
@@ -226,7 +226,7 @@ def download_oklahoma_chloride(config):
 **Week 3:**
 - Struggle with Haversine formula (expected!)
 - Debug nested loops performance
-- Get exactly 48 matches
+- Get 25 vol-to-pro matches + 42 pro-to-pro matches
 - Pass all tests
 - Celebration! 🎉
 
@@ -271,7 +271,7 @@ print(f"Professional: {len(pro):,}")  # Should be ~21,975
 
 # Step 5 verification
 matches = pd.read_csv('data/outputs/matched_pairs.csv')
-print(f"Matches: {len(matches)}")  # Should be exactly 48
+print(f"Matches: {len(matches)}")  # Should be 25 (vol-to-pro)
 
 # Final verification
 pytest tests/test_pipeline.py -v  # All tests should pass
@@ -279,11 +279,11 @@ pytest tests/test_pipeline.py -v  # All tests should pass
 
 ### **Your Role (when things don't match):**
 
-1. **Student reports:** "I got 0 matches instead of 48"
+1. **Student reports:** "I got 0 matches instead of 25"
 2. **You check Teacher Guide:** See Haversine implementation
 3. **You guide:** "Walk me through your distance calculation"
 4. **Student debugs:** Realizes they used Euclidean instead of Haversine
-5. **Student fixes:** Gets 48 matches
+5. **Student fixes:** Gets 25 vol-to-pro + 42 pro-to-pro matches
 6. **Learning happens:** Understands why Haversine matters for Earth distances
 
 ---
@@ -317,7 +317,7 @@ Junior's computer:
 ### **They succeed when:**
 
 1. ✅ All tests pass
-2. ✅ Results match exactly (N=48, R²=0.839)
+2. ✅ Results match (Pro-to-Pro: N=42, R²=0.753; Vol-to-Pro: N=25, R²=0.607)
 3. ✅ They can explain how spatial-temporal matching works
 4. ✅ They can debug issues independently
 5. ✅ They're proud to show this in interviews

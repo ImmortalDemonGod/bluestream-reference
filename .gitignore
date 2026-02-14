@@ -1,14 +1,18 @@
 # Data files (too large for git)
-
 data/raw/*.csv
 data/raw/*.zip
 data/processed/*.csv
-#data/outputs/*.png
-
 data/outputs/*.csv
 data/outputs/*.txt
+data/outputs/*.json
+data/outputs/experiments/
+data/outputs/OCC_package*
 data/ORGINAL_DATA/
 data/reference_matched_pairs.csv
+data/Requested_Blue Thumb Chemical Data.csv
+
+# Legacy / non-essential docs
+docs_legacy/
 
 # Python
 __pycache__/
@@ -26,8 +30,6 @@ venv/
 Thumbs.db
 files.zip
 resultphyschem-ok.zip
-docs
 filesd.zip
+filesd/
 Zoom.pkg
-filesd/BLUE_THUMB_MEETING_PRESENTATION_OUTLINE.md
-filesd/PRESENTATION_CREATION_GUIDE.md
